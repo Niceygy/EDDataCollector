@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
+import math
 
 
 """
@@ -91,28 +92,19 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 
-def get_week_of_cycle(date=datetime.now(), cycle_length=6, start_day=3):
+def get_week_of_cycle():
     """
     Determines the current week of a cycle.
-
-    Args:
-        date (datetime): The date to check.
-        cycle_length (int): The length of the cycle in weeks.
-        start_day (int): The starting day of the week (0=Monday, 1=Tuesday, ..., 6=Sunday).
-
     Returns:
         int: The current week of the cycle (1-based).
     """
-    # Calculate the number of days since the start of the cycle
+    date=datetime.now()
     days_since_start = (date - datetime(2025, 1, 10)).days
-
-    # Adjust for the start day of the week
-    days_since_start += (7 - start_day)
-
-    # Calculate the current week of the cycle
-    current_week = (days_since_start // 7) % cycle_length + 1
-
-    return current_week
+    weeks = math.trunc(days_since_start / 7)
+    weeks = weeks + 1
+    while weeks > 6:
+        weeks = weeks - 6
+    return weeks
 
 
 print(f"Today is week {get_week_of_cycle()} in a 6-week cycle.")
@@ -135,8 +127,8 @@ def add_system(
     height,
     state,
     shortcode,
-    is_anarchy=None,
-    has_res_sites=None,
+    is_anarchy
+    # has_res_sites,
 ):
     # Is in bubble?
     if (
@@ -163,14 +155,14 @@ def add_system(
                 state=state,
                 shortcode=shortcode,
                 is_anarchy=is_anarchy,
-                has_res_sites=has_res_sites,
+                # has_res_sites=has_res_sites,
             )
             session.add(new_system)
         else:
             # already in db, update
             system.state = state
             system.is_anarchy = is_anarchy
-            system.has_res_sites = has_res_sites
+            # system.has_res_sites = has_res_sites
 
 
 def add_station(
@@ -179,14 +171,27 @@ def add_station(
     system_name = str(system_name).replace("'", ".")
     # is already in database?
     station = session.query(Station).filter_by(star_system=system_name).first()
+
+    #station type
+    match station_type:
+        case "Coriolis":
+            station_type = "Starport"
+        case "Orbis":
+            station_type = "Starport"
+        case "Ocellus":
+            station_type = "Starport"
+
     if station is None:
         # not already in db, add it
+        # print(f"adding {station_name}")
         new_station = Station(
             star_system=system_name,
             station_name=station_name,
             station_type=station_type,
         )
         session.add(new_station)
+    # else:
+    #     print(f"skipping {station_name}")
 
 
 def alter_system_data(session, system_name, has_res_sites=None, is_anarchy=None):
@@ -324,6 +329,20 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_megaship(megaship_name, systemName, session)
+                                    elif signal["SignalType"] == "StationCoriolis":
+                                        station_name = str(signal["SignalName"])
+                                        systemName = str(
+                                            __json["message"]["StarSystem"]
+                                        )
+                                        add_station(session, station_name, "Coriolis", systemName)
+                                    elif signal["SignalType"] == "StationONeilOrbis":
+                                        station_name = str(signal["SignalName"])
+                                        systemName = str(
+                                            __json["message"]["StarSystem"]
+                                        )
+                                        add_station(session, station_name, "Orbis", systemName)
+                                                                    
+
 
 
                         case "FSDJump":
@@ -379,6 +398,7 @@ def main():
                                     state,
                                     shortcode,
                                     isAnarchy,
+
                                 )
 
                 session.commit()
