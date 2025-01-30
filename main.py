@@ -55,6 +55,7 @@ megaships:
     system6 text
 """
 
+
 class StarSystem(Base):
     __tablename__ = "star_systems"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -74,6 +75,7 @@ class Station(Base):
     station_name = Column(String(255))
     star_system = Column(String(255))
     station_type = Column(String(255))
+
 
 class Megaship(Base):
     __tablename__ = "megaships"
@@ -98,13 +100,13 @@ def get_week_of_cycle():
     Returns:
         int: The current week of the cycle (1-based).
     """
-    date=datetime.now()
+    date = datetime.now()
     days_since_start = (date - datetime(2025, 1, 10)).days
     weeks = math.trunc(days_since_start / 7)
     weeks = weeks + 1
     while weeks > 6:
         weeks = weeks - 6
-    return weeks
+    return 4  # weeks
 
 
 print(f"Today is week {get_week_of_cycle()} in a 6-week cycle.")
@@ -127,7 +129,7 @@ def add_system(
     height,
     state,
     shortcode,
-    is_anarchy
+    is_anarchy,
     # has_res_sites,
 ):
     # Is in bubble?
@@ -165,14 +167,12 @@ def add_system(
             # system.has_res_sites = has_res_sites
 
 
-def add_station(
-    session, station_name, station_type, system_name
-):
+def add_station(session, station_name, station_type, system_name):
     system_name = str(system_name).replace("'", ".")
     # is already in database?
     station = session.query(Station).filter_by(star_system=system_name).first()
 
-    #station type
+    # station type
     match station_type:
         case "Coriolis":
             station_type = "Starport"
@@ -210,25 +210,28 @@ def alter_system_data(session, system_name, has_res_sites=None, is_anarchy=None)
 
 def add_megaship(megaship_name, system, session):
     # print(f"Adding megaship {megaship_name} in {system} for week {get_week_of_cycle()}")
-    #what week is it?
+    # what week is it?
 
     week = get_week_of_cycle()
     system_mapping = {
-        1: 'SYSTEM1',
-        2: 'SYSTEM2',
-        3: 'SYSTEM3',
-        4: 'SYSTEM4',
-        5: 'SYSTEM5',
-        6: 'SYSTEM6'
+        1: "SYSTEM1",
+        2: "SYSTEM2",
+        3: "SYSTEM3",
+        4: "SYSTEM4",
+        5: "SYSTEM5",
+        6: "SYSTEM6",
     }
 
     megaship = session.query(Megaship).filter_by(name=megaship_name).first()
     # print("megaship")
     if megaship is not None:
-        #entry exists
+        # entry exists
         system_attribute = system_mapping.get(week)
-        if system_attribute is not None and getattr(megaship, system_attribute) is not None:
-            #entry for this week exists
+        if (
+            system_attribute is not None
+            and getattr(megaship, system_attribute) is None
+        ):
+            # entry for this week does not exist, update it
             match week:
                 case 1:
                     megaship.SYSTEM1 = system
@@ -242,21 +245,20 @@ def add_megaship(megaship_name, system, session):
                     megaship.SYSTEM5 = system
                 case 6:
                     megaship.SYSTEM6 = system
+            session.add(megaship)
+        else:
+            message = "already gotdata for this week, ignoring"
     else:
         new_megaship = Megaship()
 
         if week in system_mapping:
             new_megaship = Megaship(
-                name=megaship_name,
-                **{system_mapping[week]: system}
+                name=megaship_name, **{system_mapping[week]: system}
             )
             session.add(new_megaship)
             return
         else:
             raise ValueError("Invalid week number")
-        
-    
-
 
 
 def main():
@@ -334,16 +336,20 @@ def main():
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
-                                        add_station(session, station_name, "Coriolis", systemName)
+                                        add_station(
+                                            session,
+                                            station_name,
+                                            "Coriolis",
+                                            systemName,
+                                        )
                                     elif signal["SignalType"] == "StationONeilOrbis":
                                         station_name = str(signal["SignalName"])
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
-                                        add_station(session, station_name, "Orbis", systemName)
-                                                                    
-
-
+                                        add_station(
+                                            session, station_name, "Orbis", systemName
+                                        )
 
                         case "FSDJump":
                             starPos = __json["message"]["StarPos"]
@@ -398,11 +404,10 @@ def main():
                                     state,
                                     shortcode,
                                     isAnarchy,
-
                                 )
 
                 session.commit()
-                #commit once per cycle, not once per function
+                # commit once per cycle, not once per function
 
             except zmq.ZMQError as e:
                 print("ZMQSocketException: " + str(e))
