@@ -4,7 +4,7 @@ import zmq
 import simplejson
 import sys
 import time
-from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean
+from sqlalchemy import and_, create_engine, Column, Integer, String, Float, Boolean
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
@@ -106,7 +106,7 @@ def get_week_of_cycle():
     weeks = weeks + 1
     while weeks > 6:
         weeks = weeks - 6
-    return 4  # weeks
+    return 5 # weeks
 
 
 print(f"Today is week {get_week_of_cycle()} in a 6-week cycle.")
@@ -170,7 +170,9 @@ def add_system(
 def add_station(session, station_name, station_type, system_name):
     system_name = str(system_name).replace("'", ".")
     # is already in database?
-    station = session.query(Station).filter_by(star_system=system_name).first()
+    station = session.query(Station).filter(
+        and_(Station.star_system == system_name, Station.station_name == station_name)
+    ).first()
 
     # station type
     match station_type:
@@ -289,31 +291,31 @@ def main():
                         case "CarrierJumpRequest":
                             print(__json["message"])
 
-                        case "Docked":
-                            systemName = str(__json["message"]["StarSystem"])
-                            stationName = str(__json["message"]["StationName"])
-                            stationType = str(__json["message"]["StationType"])
-                            factionName = str(
-                                __json["message"]["StationFaction"]["Name"]
-                            )
-                            isAnarchy = False
-                            if (
-                                str(__json["message"]["StationGovernment"])
-                                == "$government_Anarchy;"
-                            ):
-                                isAnarchy = True
+                        # case "Docked":
+                        #     systemName = str(__json["message"]["StarSystem"])
+                        #     stationName = str(__json["message"]["StationName"])
+                        #     stationType = str(__json["message"]["StationType"])
+                        #     factionName = str(
+                        #         __json["message"]["StationFaction"]["Name"]
+                        #     )
+                        #     isAnarchy = False
+                        #     if (
+                        #         str(__json["message"]["StationGovernment"])
+                        #         == "$government_Anarchy;"
+                        #     ):
+                        #         isAnarchy = True
 
-                            if (
-                                stationType != "FleetCarrier"
-                                and stationName != "OnFootSettlement"
-                            ):
-                                add_station(
-                                    session,
-                                    stationName,
-                                    stationType,
-                                    systemName,
-                                )
-                                alter_system_data(session, systemName, None, isAnarchy)
+                        #     if (
+                        #         stationType != "FleetCarrier"
+                        #         and stationName != "OnFootSettlement"
+                        #     ):
+                        #         add_station(
+                        #             session,
+                        #             stationName,
+                        #             stationType,
+                        #             systemName,
+                        #         )
+                        #         alter_system_data(session, systemName, None, isAnarchy)
 
                         case "FSSSignalDiscovered":
                             for signal in __json["message"]["signals"]:
@@ -342,6 +344,17 @@ def main():
                                             "Coriolis",
                                             systemName,
                                         )
+                                    elif signal["SignalType"] == "Outpost":
+                                        station_name = str(signal["SignalName"])
+                                        systemName = str(
+                                            __json["message"]["StarSystem"]
+                                        )
+                                        add_station(
+                                            session,
+                                            station_name,
+                                            "Outpost",
+                                            systemName,
+                                        )
                                     elif signal["SignalType"] == "StationONeilOrbis":
                                         station_name = str(signal["SignalName"])
                                         systemName = str(
@@ -349,6 +362,17 @@ def main():
                                         )
                                         add_station(
                                             session, station_name, "Orbis", systemName
+                                        )
+                                    elif signal["SignalType"] == "Ocellus":
+                                        station_name = str(signal["SignalName"])
+                                        systemName = str(
+                                            __json["message"]["StarSystem"]
+                                        )
+                                        add_station(
+                                            session,
+                                            station_name,
+                                            "Ocellus",
+                                            systemName,
                                         )
 
                         case "FSDJump":
