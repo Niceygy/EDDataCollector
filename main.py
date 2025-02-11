@@ -7,7 +7,7 @@ import time
 from sqlalchemy import and_, create_engine, Column, Integer, String, Float, Boolean
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime, timedelta
+from datetime import datetime
 import math
 
 
@@ -58,8 +58,7 @@ megaships:
 
 class StarSystem(Base):
     __tablename__ = "star_systems"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    system_name = Column(String(255))
+    system_name = Column(String(255), primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)
     height = Column(Float)
@@ -148,6 +147,7 @@ def add_system(
         # is already in database?
         system = session.query(StarSystem).filter_by(system_name=system_name).first()
         if system is None:
+            # print(f"Adding {system_name}")
             # not already in db, add it
             new_system = StarSystem(
                 system_name=system_name,
@@ -157,13 +157,14 @@ def add_system(
                 state=state,
                 shortcode=shortcode,
                 is_anarchy=is_anarchy,
-                # has_res_sites=has_res_sites,
             )
             session.add(new_system)
         else:
             # already in db, update
+            system.shortcode = shortcode
             system.state = state
             system.is_anarchy = is_anarchy
+            # print(f"Updating system {system_name}")
             # system.has_res_sites = has_res_sites
 
 
