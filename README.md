@@ -4,6 +4,7 @@ A python script that collects data from the EDDN for use in PowerPlay Assistant
 Requires:
 - Python3
 - The zmq pypi package
+- The sqalchemy pypi package
 - A mariadb database structured as follows:
 
 Systems table: 
