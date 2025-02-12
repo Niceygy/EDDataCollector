@@ -265,6 +265,8 @@ def add_megaship(megaship_name, system, session):
 
 
 def main():
+    time.sleep(5)
+    print("Starting...")
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
     print("Using database URI: " + DATABASE_URI)
