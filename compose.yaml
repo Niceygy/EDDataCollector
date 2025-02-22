@@ -6,7 +6,7 @@ services:
     container_name: PowerPlayAssistant
     stdin_open: true
     tty: true
-    image: niceygynet/powerplay_assistant
+    image: ghcr.io/niceygy/powerplayassistant
     restart: unless-stopped
     networks:
       - intranet
@@ -22,7 +22,7 @@ services:
       MYSQL_DATABASE: elite
       MYSQL_USER: assistant
       MYSQL_PASSWORD: 6548
-      userstat: 1
+      USERSTAT: 1
     ports:
       - 3306:3306
     volumes:
@@ -30,7 +30,7 @@ services:
       - /root/code/ED/mysql.cnf:/etc/mysql/my.cnf
     restart: unless-stopped
   data_collector:
-    container_name: eddatacollector
+    container_name: EDDataCollector
     stdin_open: true
     tty: true
     image: ghcr.io/niceygy/eddatacollector

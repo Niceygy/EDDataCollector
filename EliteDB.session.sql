@@ -1,1 +1,1 @@
-DROP TABLE stations_backup;
+DELETE FROM star_systems WHERE height IS NULL;

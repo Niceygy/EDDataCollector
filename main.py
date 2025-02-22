@@ -16,8 +16,8 @@ import math
 """
 __relayEDDN = "tcp://eddn.edcd.io:9500"
 __timeoutEDDN = 600000
-BUBBLE_LIMIT_LOW = -500
-BUBBLE_LIMIT_HIGH = 500
+BUBBLE_LIMIT_LOW = -550
+BUBBLE_LIMIT_HIGH = 550
 
 DATABASE_URI = "mysql+pymysql://assistant:6548@10.0.0.52/elite"
 
@@ -100,12 +100,12 @@ def get_week_of_cycle():
         int: The current week of the cycle (1-based).
     """
     date = datetime.now()
-    days_since_start = (date - datetime(2025, 1, 10)).days
+    days_since_start = (date - datetime(2025, 1, 9)).days
     weeks = math.trunc(days_since_start / 7)
     weeks = weeks + 1
     while weeks > 6:
         weeks = weeks - 6
-    return 5 # weeks
+    return  weeks
 
 
 print(f"Today is week {get_week_of_cycle()} in a 6-week cycle.")
@@ -198,6 +198,7 @@ def add_station(session, station_name, station_type, system_name):
 
 
 def alter_system_data(session, system_name, has_res_sites=None, is_anarchy=None):
+    system_name = str(system_name).replace("'", ".")
     system = session.query(StarSystem).filter_by(system_name=system_name).first()
     if system is None:
         new_system = StarSystem(
@@ -327,9 +328,9 @@ def main():
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
-                                        alter_system_data(
-                                            session, systemName, True, None
-                                        )
+                                        # alter_system_data(
+                                        #     session, systemName, True, None
+                                        # )
                                     elif signal["SignalType"] == "Megaship":
                                         megaship_name = str(signal["SignalName"])
                                         systemName = str(
