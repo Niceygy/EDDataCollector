@@ -160,12 +160,20 @@ def add_system(
             )
             session.add(new_system)
         else:
-            # already in db, update
-            system.shortcode = shortcode
-            system.state = state
-            system.is_anarchy = is_anarchy
-            # print(f"Updating system {system_name}")
-            # system.has_res_sites = has_res_sites
+            if system.height is None:
+                system.height = height
+                system.latitude = latitude,
+                system.longitude = longitude
+                system.shortcode = shortcode
+                system.state = state
+                system.is_anarchy = is_anarchy
+            else:
+                # already in db, update
+                system.shortcode = shortcode
+                system.state = state
+                system.is_anarchy = is_anarchy
+                # print(f"Updating system {system_name}")
+                # system.has_res_sites = has_res_sites
 
 
 def add_station(session, station_name, station_type, system_name):
@@ -204,6 +212,7 @@ def alter_system_data(session, system_name, has_res_sites=None, is_anarchy=None)
         new_system = StarSystem(
             system_name=system_name, has_res_sites=has_res_sites, is_anarchy=is_anarchy
         )
+        print(f"Added new system: {system_name}")
         session.add(new_system)
     else:
         if has_res_sites is not None:

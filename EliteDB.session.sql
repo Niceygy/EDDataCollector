@@ -1,1 +1,1 @@
-DELETE FROM star_systems WHERE height IS NULL;
+SELECT * FROM star_systems WHERE height IS NULL;
