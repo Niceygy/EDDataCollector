@@ -1,4 +1,4 @@
-print("Loading...")
+print("Loading Imports, Please Stand By")
 import zlib
 import zmq
 import simplejson
@@ -7,8 +7,6 @@ import time
 from sqlalchemy import and_, create_engine, Column, Integer, String, Float, Boolean
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
-import math
 
 
 """
@@ -54,7 +52,7 @@ megaships:
     system5 text
     system6 text
 """
-
+engine = create_engine(DATABASE_URI)
 
 class StarSystem(Base):
     __tablename__ = "star_systems"
@@ -87,25 +85,11 @@ class Megaship(Base):
     SYSTEM6 = Column(String(255))
 
 
-# Create an engine and a session
-engine = create_engine(DATABASE_URI)
-Session = sessionmaker(bind=engine)
-session = Session()
-
-
 def get_week_of_cycle():
-    """
-    Determines the current week of a cycle.
-    Returns:
-        int: The current week of the cycle (1-based).
-    """
-    date = datetime.now()
-    days_since_start = (date - datetime(2025, 1, 9)).days
-    weeks = math.trunc(days_since_start / 7)
-    weeks = weeks + 1
-    while weeks > 6:
-        weeks = weeks - 6
-    return  weeks
+    with open("week.txt", "r") as f:
+        data = f.read().strip()
+        f.close()
+    return data
 
 
 print(f"Today is week {get_week_of_cycle()} in a 6-week cycle.")
@@ -115,9 +99,9 @@ def create_tables():
     """
     Create the necessary tables in the database if they do not exist.
     """
-    print("Creating tables")
+    print("[1/4] Creating tables")
     Base.metadata.create_all(engine)
-    print("Tables created")
+    print("[1/4] Tables created")
 
 
 def add_system(
@@ -147,7 +131,6 @@ def add_system(
         # is already in database?
         system = session.query(StarSystem).filter_by(system_name=system_name).first()
         if system is None:
-            # print(f"Adding {system_name}")
             # not already in db, add it
             new_system = StarSystem(
                 system_name=system_name,
@@ -161,6 +144,7 @@ def add_system(
             session.add(new_system)
         else:
             if system.height is None:
+                #part filled in, finish the rest
                 system.height = height
                 system.latitude = latitude,
                 system.longitude = longitude
@@ -172,8 +156,7 @@ def add_system(
                 system.shortcode = shortcode
                 system.state = state
                 system.is_anarchy = is_anarchy
-                # print(f"Updating system {system_name}")
-                # system.has_res_sites = has_res_sites
+
 
 
 def add_station(session, station_name, station_type, system_name):
@@ -194,15 +177,12 @@ def add_station(session, station_name, station_type, system_name):
 
     if station is None:
         # not already in db, add it
-        # print(f"adding {station_name}")
         new_station = Station(
             star_system=system_name,
             station_name=station_name,
             station_type=station_type,
         )
         session.add(new_station)
-    # else:
-    #     print(f"skipping {station_name}")
 
 
 def alter_system_data(session, system_name, has_res_sites=None, is_anarchy=None):
@@ -259,8 +239,6 @@ def add_megaship(megaship_name, system, session):
                 case 6:
                     megaship.SYSTEM6 = system
             session.add(megaship)
-        else:
-            message = "already gotdata for this week, ignoring"
     else:
         new_megaship = Megaship()
 
@@ -276,17 +254,22 @@ def add_megaship(megaship_name, system, session):
 
 def main():
     time.sleep(5)
-    print("Starting...")
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
-    print("Using database URI: " + DATABASE_URI)
+    print(f"[1/4] Conneting to MariaDB via {DATABASE_URI}")
+    # Create an engine and a session
+    Session = sessionmaker(bind=engine)
+    session = Session()
     create_tables()
+    print(f"[2/4] Connected")
 
     subscriber.setsockopt(zmq.SUBSCRIBE, b"")
     subscriber.setsockopt(zmq.RCVTIMEO, __timeoutEDDN)
+    print(f"[3/4] EDDN Subscription Ready")
 
     try:
         subscriber.connect(__relayEDDN)
+        print(f"[4/4] Connected to EDDN via {__relayEDDN}")
 
         while True:
             try:
@@ -294,6 +277,7 @@ def main():
 
                 if __message == False:
                     subscriber.disconnect(__relayEDDN)
+                    print("Disconnedted from EDDN. Suspected downtime?")
                     break
 
                 __message = zlib.decompress(__message)
@@ -301,35 +285,6 @@ def main():
 
                 if "event" in __json["message"]:
                     match __json["message"]["event"]:
-                        case "CarrierJumpRequest":
-                            print(__json["message"])
-
-                        # case "Docked":
-                        #     systemName = str(__json["message"]["StarSystem"])
-                        #     stationName = str(__json["message"]["StationName"])
-                        #     stationType = str(__json["message"]["StationType"])
-                        #     factionName = str(
-                        #         __json["message"]["StationFaction"]["Name"]
-                        #     )
-                        #     isAnarchy = False
-                        #     if (
-                        #         str(__json["message"]["StationGovernment"])
-                        #         == "$government_Anarchy;"
-                        #     ):
-                        #         isAnarchy = True
-
-                        #     if (
-                        #         stationType != "FleetCarrier"
-                        #         and stationName != "OnFootSettlement"
-                        #     ):
-                        #         add_station(
-                        #             session,
-                        #             stationName,
-                        #             stationType,
-                        #             systemName,
-                        #         )
-                        #         alter_system_data(session, systemName, None, isAnarchy)
-
                         case "FSSSignalDiscovered":
                             for signal in __json["message"]["signals"]:
                                 if "SignalType" in signal:
@@ -337,9 +292,6 @@ def main():
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
-                                        # alter_system_data(
-                                        #     session, systemName, True, None
-                                        # )
                                     elif signal["SignalType"] == "Megaship":
                                         megaship_name = str(signal["SignalName"])
                                         systemName = str(
