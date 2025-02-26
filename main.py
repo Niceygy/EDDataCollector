@@ -257,7 +257,6 @@ def main():
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
     print(f"[1/4] Conneting to MariaDB via {DATABASE_URI}")
-    # Create an engine and a session
     Session = sessionmaker(bind=engine)
     session = Session()
     create_tables()
