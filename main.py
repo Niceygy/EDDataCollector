@@ -252,7 +252,7 @@ def alter_station_data(station_name, system_name, economy, station_type, session
         session.add(new_station)
         return
     else:
-        print(f"Changed {station_name}'s (in {system_name}) economy to {economy}")
+        # print(f"Changed {station_name}'s (in {system_name}) economy to {economy}")
         station.economy = economy
         return
 
@@ -357,6 +357,9 @@ def main():
     subscriber.setsockopt(zmq.RCVTIMEO, __timeoutEDDN)
     print(f"[3/4] EDDN Subscription Ready")
 
+    NAVROUTE_CACHE = [None] * 500
+    NAVROUTE_PLACE = 0
+
     # Start the message counter thread
     threading.Thread(
         target=count_messages_per_minute, daemon=True, args=(message_queue,)
@@ -370,7 +373,6 @@ def main():
             try:
                 __message = subscriber.recv()
                 message_queue.put(__message)
-                # message_count += 1  # Increment the message count
 
                 if __message == False:
                     subscriber.disconnect(__relayEDDN)
@@ -382,6 +384,24 @@ def main():
 
                 if "event" in __json["message"]:
                     match __json["message"]["event"]:
+                        case "NavRoute":
+                            for system in __json["message"]["Route"]:
+                                system_name = system["StarSystem"]
+                                if system_name in NAVROUTE_CACHE:
+                                    continue
+                                else:
+                                    NAVROUTE_CACHE[NAVROUTE_PLACE] = system_name
+                                    if NAVROUTE_PLACE == 490:
+                                        NAVROUTE_PLACE = 0
+                                    else:
+                                        NAVROUTE_PLACE += 1
+                                # print(f"navroute {system_name}")
+                                starPos = system["StarPos"]
+                                latitude = starPos[1]
+                                longitude = starPos[0]
+                                height = starPos[2]
+
+                                add_system(session, system_name, latitude, longitude, height, None, None, None)
                         case "Docked":
                             economy = str(
                                 __json["message"]["StationEconomies"][0]["Name"]

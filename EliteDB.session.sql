@@ -1,1 +1,1 @@
-SELECT * FROM stations WHERE economy
+SELECT * FROM star_systems WHERE system_name LIKE  "%Col 285m%";
