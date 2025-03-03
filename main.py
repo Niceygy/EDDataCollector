@@ -4,9 +4,13 @@ import zmq
 import simplejson
 import sys
 import time
+import datetime
 from sqlalchemy import and_, create_engine, Column, Integer, String, Float, Boolean
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
+import threading
+import queue
+import os
 
 
 """
@@ -14,10 +18,16 @@ from sqlalchemy.orm import sessionmaker
 """
 __relayEDDN = "tcp://eddn.edcd.io:9500"
 __timeoutEDDN = 600000
-BUBBLE_LIMIT_LOW = -550
-BUBBLE_LIMIT_HIGH = 550
+BUBBLE_LIMIT_LOW = -600
+BUBBLE_LIMIT_HIGH = 600
 
 DATABASE_URI = "mysql+pymysql://assistant:6548@10.0.0.52/elite"
+DATABASE_HOST = "10.0.0.52"
+
+global STATION_LAST_5
+STATION_LAST_5 = [None] * 6
+global LAST_5_PLACE
+LAST_5_PLACE = 0
 
 Base = sqlalchemy.orm.declarative_base()
 
@@ -52,7 +62,13 @@ megaships:
     system5 text
     system6 text
 """
-engine = create_engine(DATABASE_URI)
+engine = None
+try:
+    engine = create_engine(DATABASE_URI)
+except Exception as e:
+    print(e)
+    os.exit()
+
 
 class StarSystem(Base):
     __tablename__ = "star_systems"
@@ -72,6 +88,7 @@ class Station(Base):
     station_name = Column(String(255))
     star_system = Column(String(255))
     station_type = Column(String(255))
+    economy = Column(String(255))
 
 
 class Megaship(Base):
@@ -89,7 +106,7 @@ def get_week_of_cycle():
     with open("week.txt", "r") as f:
         data = f.read().strip()
         f.close()
-    return data
+    return int(data)
 
 
 print(f"Today is week {get_week_of_cycle()} in a 6-week cycle.")
@@ -144,9 +161,9 @@ def add_system(
             session.add(new_system)
         else:
             if system.height is None:
-                #part filled in, finish the rest
+                # part filled in, finish the rest
                 system.height = height
-                system.latitude = latitude,
+                system.latitude = (latitude,)
                 system.longitude = longitude
                 system.shortcode = shortcode
                 system.state = state
@@ -158,13 +175,18 @@ def add_system(
                 system.is_anarchy = is_anarchy
 
 
-
-def add_station(session, station_name, station_type, system_name):
+def add_station(session, station_name, station_type, system_name, economy):
     system_name = str(system_name).replace("'", ".")
     # is already in database?
-    station = session.query(Station).filter(
-        and_(Station.star_system == system_name, Station.station_name == station_name)
-    ).first()
+    station = (
+        session.query(Station)
+        .filter(
+            and_(
+                Station.star_system == system_name, Station.station_name == station_name
+            )
+        )
+        .first()
+    )
 
     # station type
     match station_type:
@@ -181,8 +203,58 @@ def add_station(session, station_name, station_type, system_name):
             star_system=system_name,
             station_name=station_name,
             station_type=station_type,
+            economy=economy,
         )
         session.add(new_station)
+
+
+def alter_station_data(station_name, system_name, economy, station_type, session):
+    global STATION_LAST_5
+    global LAST_5_PLACE
+    system_name = str(system_name).replace("'", ".")
+    if f"{station_name}{system_name}" in STATION_LAST_5:
+        return
+    else:
+        STATION_LAST_5[LAST_5_PLACE] = f"{station_name}{system_name}"
+        if LAST_5_PLACE == 5:
+            LAST_5_PLACE = 0
+        else:
+            LAST_5_PLACE += 1
+
+    # is already in database?
+    station = (
+        session.query(Station)
+        .filter(
+            and_(
+                Station.star_system == system_name, Station.station_name == station_name
+            )
+        )
+        .first()
+    )
+
+    # station type
+    match station_type:
+        case "Coriolis":
+            station_type = "Starport"
+        case "Orbis":
+            station_type = "Starport"
+        case "Ocellus":
+            station_type = "Starport"
+
+    if station is None:
+        # not already in db, add it
+        new_station = Station(
+            star_system=system_name,
+            station_name=station_name,
+            station_type=station_type,
+            economy=economy,
+        )
+        session.add(new_station)
+        return
+    else:
+        print(f"Changed {station_name}'s (in {system_name}) economy to {economy}")
+        station.economy = economy
+        return
 
 
 def alter_system_data(session, system_name, has_res_sites=None, is_anarchy=None):
@@ -220,10 +292,7 @@ def add_megaship(megaship_name, system, session):
     if megaship is not None:
         # entry exists
         system_attribute = system_mapping.get(week)
-        if (
-            system_attribute is not None
-            and getattr(megaship, system_attribute) is None
-        ):
+        if system_attribute is not None and getattr(megaship, system_attribute) is None:
             # entry for this week does not exist, update it
             match week:
                 case 1:
@@ -252,6 +321,28 @@ def add_megaship(megaship_name, system, session):
             raise ValueError("Invalid week number")
 
 
+# Add this global variable
+# message_count = 0
+
+# Create a queue to store messages
+message_queue = queue.Queue()
+
+
+# Modify the count_messages_per_minute function to read from the queue
+def count_messages_per_minute(q):
+    global message_count
+    message_count = 0
+    while True:
+        time.sleep(60 * 60)
+        # print(f"Messages per minute: {message_count}")
+        timestr = f"{datetime.datetime.date()} {datetime.datetime.time()}"
+        open("mpm.txt", "a").write(f"{message_count},{timestr}\n")
+        message_count = 0
+        while not q.empty():
+            message_queue.get()
+            message_count = message_count + 1
+
+
 def main():
     time.sleep(5)
     context = zmq.Context()
@@ -266,6 +357,11 @@ def main():
     subscriber.setsockopt(zmq.RCVTIMEO, __timeoutEDDN)
     print(f"[3/4] EDDN Subscription Ready")
 
+    # Start the message counter thread
+    threading.Thread(
+        target=count_messages_per_minute, daemon=True, args=(message_queue,)
+    ).start()
+
     try:
         subscriber.connect(__relayEDDN)
         print(f"[4/4] Connected to EDDN via {__relayEDDN}")
@@ -273,10 +369,12 @@ def main():
         while True:
             try:
                 __message = subscriber.recv()
+                message_queue.put(__message)
+                # message_count += 1  # Increment the message count
 
                 if __message == False:
                     subscriber.disconnect(__relayEDDN)
-                    print("Disconnedted from EDDN. Suspected downtime?")
+                    print("Disconneted from EDDN. Suspected downtime?")
                     break
 
                 __message = zlib.decompress(__message)
@@ -284,6 +382,30 @@ def main():
 
                 if "event" in __json["message"]:
                     match __json["message"]["event"]:
+                        case "Docked":
+                            economy = str(
+                                __json["message"]["StationEconomies"][0]["Name"]
+                            )
+                            economy = economy.replace("$economy_", "")
+                            economy = economy.removesuffix(";")
+
+                            system_name = str(__json["message"]["StarSystem"])
+                            station_name = str(__json["message"]["StationName"])
+                            station_type = str(__json["message"]["StationType"])
+                            if (
+                                economy == "Carrier"
+                                or station_name == "System Colonisation Ship"
+                            ):
+                                continue
+
+                            alter_station_data(
+                                station_name,
+                                system_name,
+                                economy,
+                                station_type,
+                                session,
+                            )
+
                         case "FSSSignalDiscovered":
                             for signal in __json["message"]["signals"]:
                                 if "SignalType" in signal:
@@ -307,6 +429,7 @@ def main():
                                             station_name,
                                             "Coriolis",
                                             systemName,
+                                            "",
                                         )
                                     elif signal["SignalType"] == "Outpost":
                                         station_name = str(signal["SignalName"])
@@ -318,6 +441,7 @@ def main():
                                             station_name,
                                             "Outpost",
                                             systemName,
+                                            "",
                                         )
                                     elif signal["SignalType"] == "StationONeilOrbis":
                                         station_name = str(signal["SignalName"])
@@ -325,7 +449,11 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_station(
-                                            session, station_name, "Orbis", systemName
+                                            session,
+                                            station_name,
+                                            "Orbis",
+                                            systemName,
+                                            "",
                                         )
                                     elif signal["SignalType"] == "Ocellus":
                                         station_name = str(signal["SignalName"])
@@ -337,6 +465,7 @@ def main():
                                             station_name,
                                             "Ocellus",
                                             systemName,
+                                            "",
                                         )
 
                         case "FSDJump":
