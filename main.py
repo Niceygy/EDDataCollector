@@ -342,7 +342,7 @@ def count_messages_per_minute(q):
     global message_count
     message_count = 0
     while True:
-        time.sleep(60)
+        time.sleep(60*60)
         timestr = f"{datetime.datetime.now().date()} {datetime.datetime.now().time()}"
         open("mpm.txt", "a").write(f"{message_count},{timestr}\n")
         message_count = 0
@@ -406,24 +406,24 @@ def main():
                     match __json["message"]["event"]:
                         # case "FSSBodySignals":
 
-                        case "NavRoute":
-                            for system in __json["message"]["Route"]:
-                                system_name = system["StarSystem"]
-                                if system_name in NAVROUTE_CACHE:
-                                    continue
-                                else:
-                                    NAVROUTE_CACHE[NAVROUTE_PLACE] = system_name
-                                    if NAVROUTE_PLACE == 490:
-                                        NAVROUTE_PLACE = 0
-                                    else:
-                                        NAVROUTE_PLACE += 1
-                                # print(f"navroute {system_name}")
-                                starPos = system["StarPos"]
-                                latitude = starPos[1]
-                                longitude = starPos[0]
-                                height = starPos[2]
+                        # case "NavRoute":
+                        #     for system in __json["message"]["Route"]:
+                        #         system_name = system["StarSystem"]
+                        #         if system_name in NAVROUTE_CACHE:
+                        #             continue
+                        #         else:
+                        #             NAVROUTE_CACHE[NAVROUTE_PLACE] = system_name
+                        #             if NAVROUTE_PLACE == 490:
+                        #                 NAVROUTE_PLACE = 0
+                        #             else:
+                        #                 NAVROUTE_PLACE += 1
+                        #         # print(f"navroute {system_name}")
+                        #         starPos = system["StarPos"]
+                        #         latitude = starPos[1]
+                        #         longitude = starPos[0]
+                        #         height = starPos[2]
 
-                                add_system(session, system_name, latitude, longitude, height, None, None, None)
+                        #         add_system(session, system_name, latitude, longitude, height, None, None, None)
                         case "Docked":
                             economy = str(
                                 __json["message"]["StationEconomies"][0]["Name"]

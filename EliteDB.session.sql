@@ -1,1 +1,1 @@
-DELETE FROM stations WHERE station_type = "OnFootSettlement"
+FROM star_systems WHERE state IS NULL OR shortcode IS NULL;
