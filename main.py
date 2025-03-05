@@ -18,11 +18,13 @@ import os
 """
 __relayEDDN = "tcp://eddn.edcd.io:9500"
 __timeoutEDDN = 600000
-BUBBLE_LIMIT_LOW = -600
-BUBBLE_LIMIT_HIGH = 600
+BUBBLE_LIMIT_LOW = -500
+BUBBLE_LIMIT_HIGH = 500
 
 DATABASE_URI = "mysql+pymysql://assistant:6548@10.0.0.52/elite"
 DATABASE_HOST = "10.0.0.52"
+
+IGNORE_THESE = ["System Colonisation Ship", "Stronghold Carrier", "OnFootSettlement"]
 
 global STATION_LAST_5
 STATION_LAST_5 = [None] * 6
@@ -177,6 +179,8 @@ def add_system(
 
 def add_station(session, station_name, station_type, system_name, economy):
     system_name = str(system_name).replace("'", ".")
+    if station_name in IGNORE_THESE:
+        return
     # is already in database?
     station = (
         session.query(Station)
@@ -220,7 +224,9 @@ def alter_station_data(station_name, system_name, economy, station_type, session
             LAST_5_PLACE = 0
         else:
             LAST_5_PLACE += 1
-
+    
+    if station_name in IGNORE_THESE:
+        return
     # is already in database?
     station = (
         session.query(Station)
@@ -259,6 +265,8 @@ def alter_station_data(station_name, system_name, economy, station_type, session
 
 def alter_system_data(session, system_name, has_res_sites=None, is_anarchy=None):
     system_name = str(system_name).replace("'", ".")
+    if system_name in IGNORE_THESE:
+        return
     system = session.query(StarSystem).filter_by(system_name=system_name).first()
     if system is None:
         new_system = StarSystem(
@@ -321,6 +329,7 @@ def add_megaship(megaship_name, system, session):
             raise ValueError("Invalid week number")
 
 
+
 # Add this global variable
 # message_count = 0
 
@@ -328,19 +337,27 @@ def add_megaship(megaship_name, system, session):
 message_queue = queue.Queue()
 
 
-# Modify the count_messages_per_minute function to read from the queue
+# Ensure messages are properly removed from the message_queue
 def count_messages_per_minute(q):
     global message_count
     message_count = 0
     while True:
-        time.sleep(60 * 60)
-        # print(f"Messages per minute: {message_count}")
-        timestr = f"{datetime.datetime.date()} {datetime.datetime.time()}"
+        time.sleep(60)
+        timestr = f"{datetime.datetime.now().date()} {datetime.datetime.now().time()}"
         open("mpm.txt", "a").write(f"{message_count},{timestr}\n")
         message_count = 0
         while not q.empty():
-            message_queue.get()
-            message_count = message_count + 1
+            q.get()
+            message_count += 1
+
+
+# Clear NAVROUTE_CACHE periodically
+def clear_navroute_cache():
+    global NAVROUTE_CACHE, NAVROUTE_PLACE
+    while True:
+        time.sleep(3600)  # Clear cache every hour
+        NAVROUTE_CACHE = [None] * 500
+        NAVROUTE_PLACE = 0
 
 
 def main():
@@ -365,6 +382,9 @@ def main():
         target=count_messages_per_minute, daemon=True, args=(message_queue,)
     ).start()
 
+    # Start the NAVROUTE_CACHE clearing thread
+    threading.Thread(target=clear_navroute_cache, daemon=True).start()
+
     try:
         subscriber.connect(__relayEDDN)
         print(f"[4/4] Connected to EDDN via {__relayEDDN}")
@@ -384,6 +404,8 @@ def main():
 
                 if "event" in __json["message"]:
                     match __json["message"]["event"]:
+                        # case "FSSBodySignals":
+
                         case "NavRoute":
                             for system in __json["message"]["Route"]:
                                 system_name = system["StarSystem"]
@@ -415,6 +437,7 @@ def main():
                             if (
                                 economy == "Carrier"
                                 or station_name == "System Colonisation Ship"
+                                or station_type == "OnFootSettlement"
                             ):
                                 continue
 

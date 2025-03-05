@@ -1,1 +1,1 @@
-SELECT * FROM star_systems WHERE system_name LIKE  "%Col 285m%";
+DELETE FROM stations WHERE station_type = "OnFootSettlement"
