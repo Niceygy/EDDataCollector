@@ -144,8 +144,10 @@ def add_system(
         or height < BUBBLE_LIMIT_LOW
     ):
         # ignore
+        print(f"ignored {system_name}")
         return
     else:
+        print(f"adding {system_name}")
         system_name = str(system_name).replace("'", ".")
         # is already in database?
         system = session.query(StarSystem).filter_by(system_name=system_name).first()
@@ -513,19 +515,11 @@ def main():
 
                         case "FSDJump":
                             starPos = __json["message"]["StarPos"]
+                            shortcode = ""
+                            state = ""
                             if "ControllingPower" in __json["message"]:
                                 power = __json["message"]["ControllingPower"]
-                                latitude = starPos[1]
-                                longitude = starPos[0]
-                                height = starPos[2]
-                                system_name = __json["message"]["StarSystem"]
                                 state = __json["message"]["PowerplayState"]
-                                security = __json["message"]["SystemSecurity"]
-                                isAnarchy = False
-                                if security == "$GAlAXY_MAP_INFO_state_anarchy;":
-                                    isAnarchy = True
-                                else:
-                                    isAnarchy = False
                                 shortcode = ""
                                 match power:
                                     case "Edmund Mahon":
@@ -554,6 +548,18 @@ def main():
                                         shortcode = "ZMT"
                                     case _:
                                         shortcode = ""
+                            
+                            latitude = starPos[1]
+                            longitude = starPos[0]
+                            height = starPos[2]
+                            system_name = __json["message"]["StarSystem"]
+                            print(system_name)
+                            security = __json["message"]["SystemSecurity"]
+                            isAnarchy = False
+                            if security == "$GAlAXY_MAP_INFO_state_anarchy;":
+                                isAnarchy = True
+                            else:
+                                isAnarchy = False
 
                                 add_system(
                                     session,
