@@ -1,1 +1,1 @@
-FROM star_systems WHERE state IS NULL OR shortcode IS NULL;
+SELECT * FROM star_systems WHERE system_name LIKE "%Col 285 Sector DD-V b18-0%";

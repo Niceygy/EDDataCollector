@@ -132,8 +132,8 @@ def add_system(
     state,
     shortcode,
     is_anarchy,
-    # has_res_sites,
 ):
+
     # Is in bubble?
     if (
         latitude > BUBBLE_LIMIT_HIGH
@@ -144,10 +144,10 @@ def add_system(
         or height < BUBBLE_LIMIT_LOW
     ):
         # ignore
-        print(f"ignored {system_name}")
+        # print(f"ignored {system_name}")
         return
     else:
-        print(f"adding {system_name}")
+        # print(f"adding {system_name}")
         system_name = str(system_name).replace("'", ".")
         # is already in database?
         system = session.query(StarSystem).filter_by(system_name=system_name).first()
@@ -226,7 +226,7 @@ def alter_station_data(station_name, system_name, economy, station_type, session
             LAST_5_PLACE = 0
         else:
             LAST_5_PLACE += 1
-    
+
     if station_name in IGNORE_THESE:
         return
     # is already in database?
@@ -274,7 +274,7 @@ def alter_system_data(session, system_name, has_res_sites=None, is_anarchy=None)
         new_system = StarSystem(
             system_name=system_name, has_res_sites=has_res_sites, is_anarchy=is_anarchy
         )
-        print(f"Added new system: {system_name}")
+        # print(f"Added new system: {system_name}")
         session.add(new_system)
     else:
         if has_res_sites is not None:
@@ -331,7 +331,6 @@ def add_megaship(megaship_name, system, session):
             raise ValueError("Invalid week number")
 
 
-
 # Add this global variable
 # message_count = 0
 
@@ -344,7 +343,7 @@ def count_messages_per_minute(q):
     global message_count
     message_count = 0
     while True:
-        time.sleep(60*60)
+        time.sleep(60 * 60)
         timestr = f"{datetime.datetime.now().date()} {datetime.datetime.now().time()}"
         open("mpm.txt", "a").write(f"{message_count},{timestr}\n")
         message_count = 0
@@ -548,12 +547,12 @@ def main():
                                         shortcode = "ZMT"
                                     case _:
                                         shortcode = ""
-                            
+
                             latitude = starPos[1]
                             longitude = starPos[0]
                             height = starPos[2]
                             system_name = __json["message"]["StarSystem"]
-                            print(system_name)
+                            # print(system_name)
                             security = __json["message"]["SystemSecurity"]
                             isAnarchy = False
                             if security == "$GAlAXY_MAP_INFO_state_anarchy;":
@@ -561,16 +560,16 @@ def main():
                             else:
                                 isAnarchy = False
 
-                                add_system(
-                                    session,
-                                    system_name,
-                                    latitude,
-                                    longitude,
-                                    height,
-                                    state,
-                                    shortcode,
-                                    isAnarchy,
-                                )
+                            add_system(
+                                session,
+                                system_name,
+                                latitude,
+                                longitude,
+                                height,
+                                state,
+                                shortcode,
+                                isAnarchy,
+                            )
 
                 session.commit()
                 # commit once per cycle, not once per function
