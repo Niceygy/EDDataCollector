@@ -215,17 +215,7 @@ def add_station(session, station_name, station_type, system_name, economy):
 
 
 def alter_station_data(station_name, system_name, economy, station_type, session):
-    global STATION_LAST_5
-    global LAST_5_PLACE
     system_name = str(system_name).replace("'", ".")
-    if f"{station_name}{system_name}" in STATION_LAST_5:
-        return
-    else:
-        STATION_LAST_5[LAST_5_PLACE] = f"{station_name}{system_name}"
-        if LAST_5_PLACE == 5:
-            LAST_5_PLACE = 0
-        else:
-            LAST_5_PLACE += 1
 
     if station_name in IGNORE_THESE:
         return
@@ -330,10 +320,6 @@ def add_megaship(megaship_name, system, session):
         else:
             raise ValueError("Invalid week number")
 
-
-# Add this global variable
-# message_count = 0
-
 # Create a queue to store messages
 message_queue = queue.Queue()
 
@@ -352,15 +338,6 @@ def count_messages_per_minute(q):
             message_count += 1
 
 
-# Clear NAVROUTE_CACHE periodically
-def clear_navroute_cache():
-    global NAVROUTE_CACHE, NAVROUTE_PLACE
-    while True:
-        time.sleep(3600)  # Clear cache every hour
-        NAVROUTE_CACHE = [None] * 500
-        NAVROUTE_PLACE = 0
-
-
 def main():
     time.sleep(5)
     context = zmq.Context()
@@ -375,16 +352,11 @@ def main():
     subscriber.setsockopt(zmq.RCVTIMEO, __timeoutEDDN)
     print(f"[3/4] EDDN Subscription Ready")
 
-    NAVROUTE_CACHE = [None] * 500
-    NAVROUTE_PLACE = 0
-
     # Start the message counter thread
     threading.Thread(
         target=count_messages_per_minute, daemon=True, args=(message_queue,)
     ).start()
 
-    # Start the NAVROUTE_CACHE clearing thread
-    threading.Thread(target=clear_navroute_cache, daemon=True).start()
 
     try:
         subscriber.connect(__relayEDDN)
@@ -405,30 +377,14 @@ def main():
 
                 if "event" in __json["message"]:
                     match __json["message"]["event"]:
-                        # case "FSSBodySignals":
-
-                        # case "NavRoute":
-                        #     for system in __json["message"]["Route"]:
-                        #         system_name = system["StarSystem"]
-                        #         if system_name in NAVROUTE_CACHE:
-                        #             continue
-                        #         else:
-                        #             NAVROUTE_CACHE[NAVROUTE_PLACE] = system_name
-                        #             if NAVROUTE_PLACE == 490:
-                        #                 NAVROUTE_PLACE = 0
-                        #             else:
-                        #                 NAVROUTE_PLACE += 1
-                        #         # print(f"navroute {system_name}")
-                        #         starPos = system["StarPos"]
-                        #         latitude = starPos[1]
-                        #         longitude = starPos[0]
-                        #         height = starPos[2]
-
-                        #         add_system(session, system_name, latitude, longitude, height, None, None, None)
                         case "Docked":
-                            economy = str(
-                                __json["message"]["StationEconomies"][0]["Name"]
-                            )
+                            economy = None
+                            try:
+                                economy = str(
+                                    __json["message"]["StationEconomies"][0]["Name"]
+                                )
+                            except Exception:
+                                economy = "$economy_None;"
                             economy = economy.replace("$economy_", "")
                             economy = economy.removesuffix(";")
 
