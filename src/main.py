@@ -10,25 +10,14 @@ import threading
 import queue
 import os
 
+# Local
 
-"""
- "  Configuration
-"""
-__relayEDDN = "tcp://eddn.edcd.io:9500"
-__timeoutEDDN = 600000
-BUBBLE_LIMIT_LOW = -500
-BUBBLE_LIMIT_HIGH = 500
+from megaships import add_megaship
+from star_systems import add_system
+from stations import add_station, alter_station_data
+from constants import DATABASE_URI, EDDN_TIMEOUT, EDDN_URI, IGNORE_THESE, get_week_of_cycle
 
-DATABASE_HOST = "10.0.0.52"
-DATABASE_URI = f"mongodb://{DATABASE_HOST}:27017"
 
-IGNORE_THESE = [
-    "System Colonisation Ship",
-    "Stronghold Carrier",
-    "OnFootSettlement",
-    "Colonisation",
-    "$EXT_PANEL_ColonisationShip; [inactive]",
-]
 
 
 """
@@ -64,198 +53,16 @@ megaships:
 """
 client = None
 try:
+    print(f"[1/4] Connecting to MongoDB via {DATABASE_URI}")
     client = MongoClient(DATABASE_URI)
     database = client.get_database("elite")
+    print("[1/4] Connected.")
 except Exception as e:
     print(e)
     os.exit()
 
 
-def get_week_of_cycle():
-    with open("week.txt", "r") as f:
-        data = f.read().strip()
-        f.close()
-    return int(data)
-
-
-print(f"Today is week {get_week_of_cycle()} in a 6-week cycle.")
-
-
-def add_system(
-    database,
-    system_name,
-    latitude,
-    longitude,
-    height,
-    state,
-    shortcode,
-    is_anarchy,
-):
-
-    # Is in bubble?
-    if (
-        latitude > BUBBLE_LIMIT_HIGH
-        or latitude < BUBBLE_LIMIT_LOW
-        or longitude > BUBBLE_LIMIT_HIGH
-        or longitude < BUBBLE_LIMIT_LOW
-        or height > BUBBLE_LIMIT_HIGH
-        or height < BUBBLE_LIMIT_LOW
-    ):
-        return
-    else:
-        system_name = str(system_name).replace("'", ".")
-        # is already in database?
-        system_collection = database["star_systems"]
-        system = system_collection.find({"system_name": system_name})
-        if system is None:
-            # not already in db, add it
-            system_collection.insert_one(
-                {
-                    'system_name': system_name
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "height": height,
-                    "state": state,
-                    "shortcode": shortcode,
-                    "is_anarchy": is_anarchy,
-                }
-            )
-        else:
-            if system.height is None:
-                # part filled in, finish the rest
-                # Update a single record in the add_system function
-                system_collection.update_one(
-                    {"system_name": system_name},
-                    {"$set": {
-                        "latitude": latitude,
-                        "longitude": longitude,
-                        "height": height,
-                        "state": state,
-                        "shortcode": shortcode,
-                        "is_anarchy": is_anarchy
-                    }}
-                )
-            else:
-                # already in db, update
-                system_collection.update_one(
-                    {"system_name": system_name},
-                    {"$set": {
-                        "state": state,
-                        "shortcode": shortcode,
-                        "is_anarchy": is_anarchy
-                    }}
-                )
-
-def add_station(database, station_name, station_type, system_name, economy):
-    system_name = str(system_name).replace("'", ".")
-    if station_name in IGNORE_THESE:
-        return
-    # is already in database?
-    station_collection = database["stations"]
-    station = station_collection.find({"system_name": system_name})
-
-    # station type
-    match station_type:
-        case "Coriolis":
-            station_type = "Starport"
-        case "Orbis":
-            station_type = "Starport"
-        case "Ocellus":
-            station_type = "Starport"
-
-    if station is None:
-        # not already in db, add it
-        station_collection.insert_one(
-            {
-                "station_name": station_name,
-                "system_name": system_name,
-                "station_type": station_type,
-                "economy": economy,
-            }
-        )
-
-
-def alter_station_data(station_name, system_name, economy, station_type, database):
-    system_name = str(system_name).replace("'", ".")
-
-    if station_name in IGNORE_THESE:
-        return
-    # is already in database?
-    station_collection = database["stations"]
-    station = station_collection.find({"system_name": system_name})
-
-    # station type
-    match station_type:
-        case "Coriolis":
-            station_type = "Starport"
-        case "Orbis":
-            station_type = "Starport"
-        case "Ocellus":
-            station_type = "Starport"
-
-    if station is None:
-        # not already in db, add it
-        # Update a single record
-        station_collection.insert_one(
-            {
-                "station_name": station_name,
-                "system_name": system_name,
-                "station_type": station_type,
-                "economy": economy,
-            }
-        )
-        return
-    else:
-        # print(f"Changed {station_name}'s (in {system_name}) economy to {economy}")
-        station_collection.update_one(
-            {"system_name": system_name, "station_name": station_name},
-            {"$set": {"economy": economy}},
-        )
-        return
-
-
-
-def add_megaship(megaship_name, system, session):
-    # print(f"Adding megaship {megaship_name} in {system} for week {get_week_of_cycle()}")
-    # what week is it?
-
-    week = get_week_of_cycle()
-    system_mapping = {
-        1: "SYSTEM1",
-        2: "SYSTEM2",
-        3: "SYSTEM3",
-        4: "SYSTEM4",
-        5: "SYSTEM5",
-        6: "SYSTEM6",
-    }
-
-    megaship = session.query(Megaship).filter_by(name=megaship_name).first()
-    # print("megaship")
-    if megaship is not None:
-        # entry exists
-        system_attribute = system_mapping.get(week)
-        if system_attribute is not None and getattr(megaship, system_attribute) is None:
-            # entry for this week does not exist, update it
-            match week:
-                case 1:
-                    megaship.SYSTEM1 = system
-                case 2:
-                    megaship.SYSTEM2 = system
-                case 3:
-                    megaship.SYSTEM3 = system
-                case 4:
-                    megaship.SYSTEM4 = system
-                case 5:
-                    megaship.SYSTEM5 = system
-                case 6:
-                    megaship.SYSTEM6 = system
-            session.add(megaship)
-    else:
-        if week in system_mapping:
-
-            return
-        else:
-            raise ValueError("Invalid week number")
+print(f"[2/4] Today is week {get_week_of_cycle()} in a 6-week cycle.")
 
 
 # Create a queue to store messages
@@ -280,12 +87,10 @@ def main():
     time.sleep(5)
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
-    print(f"[1/4] Conneting to MongoDB via {DATABASE_URI}")
-    database = client.get_database("elite")
-    print(f"[2/4] Connected")
+    print(f"[2/4] Loaded")
 
     subscriber.setsockopt(zmq.SUBSCRIBE, b"")
-    subscriber.setsockopt(zmq.RCVTIMEO, __timeoutEDDN)
+    subscriber.setsockopt(zmq.RCVTIMEO, EDDN_TIMEOUT)
     print(f"[3/4] EDDN Subscription Ready")
 
     # Start the message counter thread
@@ -294,8 +99,8 @@ def main():
     ).start()
 
     try:
-        subscriber.connect(__relayEDDN)
-        print(f"[4/4] Connected to EDDN via {__relayEDDN}")
+        subscriber.connect(EDDN_URI)
+        print(f"[4/4] Connected to EDDN via {EDDN_URI}")
 
         while True:
             try:
@@ -303,7 +108,7 @@ def main():
                 message_queue.put(__message)
 
                 if __message == False:
-                    subscriber.disconnect(__relayEDDN)
+                    subscriber.disconnect(EDDN_URI)
                     print("Disconneted from EDDN. Suspected downtime?")
                     break
 
@@ -354,14 +159,14 @@ def main():
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
-                                        add_megaship(megaship_name, systemName, session)
+                                        add_megaship(megaship_name, systemName, database)
                                     elif signal["SignalType"] == "StationCoriolis":
                                         station_name = str(signal["SignalName"])
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
                                         add_station(
-                                            session,
+                                            database,
                                             station_name,
                                             "Coriolis",
                                             systemName,
@@ -373,7 +178,7 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_station(
-                                            session,
+                                            database,
                                             station_name,
                                             "Outpost",
                                             systemName,
@@ -385,7 +190,7 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_station(
-                                            session,
+                                            database,
                                             station_name,
                                             "Orbis",
                                             systemName,
@@ -397,7 +202,7 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_station(
-                                            session,
+                                            database,
                                             station_name,
                                             "Ocellus",
                                             systemName,
@@ -463,18 +268,18 @@ def main():
                                 isAnarchy,
                             )
 
-                session.commit()
-                # commit once per cycle, not once per function
-
             except zmq.ZMQError as e:
                 print("ZMQSocketException: " + str(e))
                 sys.stdout.flush()
-                subscriber.disconnect(__relayEDDN)
+                subscriber.disconnect(EDDN_URI)
+                client.close()
                 time.sleep(5)
-    except Exception as e:
+    except zmq.ZMQError as e:#Exception as e:
         print("Error: " + str(e))
         sys.stdout.flush()
+        client.close()
         time.sleep(5)
+        return
 
 
 main()

@@ -1,3 +1,4 @@
 database.db
 temp.jsonl
 .venv
+src/__pycache__
