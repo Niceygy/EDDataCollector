@@ -1,5 +1,4 @@
 from constants import BUBBLE_LIMIT_HIGH, BUBBLE_LIMIT_LOW
-# from pymongo import 
 
 
 def add_system(
@@ -27,11 +26,10 @@ def add_system(
         system_name = str(system_name).replace("'", ".")
         # is already in database?
         system_collection = database["star_systems"]
-        system = system_collection.find({"system_name": system_name})
+        system = system_collection.find_one({"system_name": system_name})
 
-        if system is None or 'system_name' not in system:
+        if system is None:
             # not already in db, add it
-            print("not exists " + system_name)
             system_collection.insert_one(
                 {
                     'system_name': system_name,
@@ -44,8 +42,7 @@ def add_system(
                 }
             )
         else:
-            print("exists!")
-            if system.height is None:
+            if system and system.get("height") is None:
                 # part filled in, finish the rest
                 # Update a single record in the add_system function
                 system_collection.update_one(
