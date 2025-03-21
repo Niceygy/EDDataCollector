@@ -1,8 +1,8 @@
-from constants import BUBBLE_LIMIT_HIGH, BUBBLE_LIMIT_LOW
+from constants import BUBBLE_LIMIT_HIGH, BUBBLE_LIMIT_LOW, StarSystem
 
 
 def add_system(
-    database,
+    session,
     system_name,
     latitude,
     longitude,
@@ -25,47 +25,35 @@ def add_system(
     else:
         system_name = str(system_name).replace("'", ".")
         # is already in database?
-        system_collection = database["star_systems"]
-        system = system_collection.find_one({"system_name": system_name})
+        system = session.query(StarSystem).filter_by(system_name=system_name).first()
         
         if state == '':
             state = "Unoccupied"
 
         if system is None:
             # not already in db, add it
-            system_collection.insert_one(
-                {
-                    'system_name': system_name,
-                    "latitude": latitude,
-                    "longitude": longitude,
-                    "height": height,
-                    "state": state,
-                    "shortcode": shortcode,
-                    "is_anarchy": is_anarchy,
-                }
+            new_system = StarSystem(
+                system_name=system_name,
+                latitude=latitude,
+                longitude=longitude,
+                height=height,
+                state=state,
+                shortcode=shortcode,
+                is_anarchy=is_anarchy,
             )
+            session.add(new_system)
         else:
-            if system and system.get("height") is None:
+            if system is None or system.height is None:
                 # part filled in, finish the rest
                 # Update a single record in the add_system function
-                system_collection.update_one(
-                    {"system_name": system_name},
-                    {"$set": {
-                        "latitude": latitude,
-                        "longitude": longitude,
-                        "height": height,
-                        "state": state,
-                        "shortcode": shortcode,
-                        "is_anarchy": is_anarchy
-                    }}
-                )
+                system.height = height
+                system.latitude = latitude,
+                system.longitude = longitude
+                system.shortcode = shortcode
+                system.state = state
+                system.is_anarchy = is_anarchy
             else:
                 # already in db, update
-                system_collection.update_one(
-                    {"system_name": system_name},
-                    {"$set": {
-                        "state": state,
-                        "shortcode": shortcode,
-                        "is_anarchy": is_anarchy
-                    }}
-                )
+                system.shortcode = shortcode
+                system.state = state
+                system.is_anarchy = is_anarchy

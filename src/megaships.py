@@ -1,10 +1,8 @@
-from constants import get_week_of_cycle, IGNORE_THESE
-from pymongo import database as db
+from constants import get_week_of_cycle, IGNORE_THESE, Megaship
+from sqlalchemy.orm import sessionmaker as sm
 
-def add_megaship(megaship_name: str, new_system: str, database: db):
+def add_megaship(megaship_name: str, new_system: str, session: sm):
     try:
-        megaship_collection = database["megaships"]
-
         if megaship_name in IGNORE_THESE:
             return
 
@@ -20,27 +18,36 @@ def add_megaship(megaship_name: str, new_system: str, database: db):
         if week not in system_mapping:
             return
     
-        megaship = megaship_collection.find_one({'name': megaship_name})
+        megaship = session.query(Megaship).filter_by(name=megaship_name).first()
         if megaship is not None:
-            if system_mapping[week] in megaship:
-            #entry set up correctly
-                stored_system = megaship[system_mapping[week]]
-                if stored_system != new_system:
-                #don't match! update it :)
-                    megaship_collection.update_one(
-                        {"name": megaship_name},
-                        {"$set": {
-                            f'{system_mapping[week]}': new_system
-                        }})
-            else:   
-                megaship_collection.insert_one({
-                    'name': megaship_name,
-                    'SYSTEM1': new_system if week == 1 else None,
-                    'SYSTEM2': new_system if week == 2 else None,
-                    'SYSTEM3': new_system if week == 3 else None,
-                    'SYSTEM4': new_system if week == 4 else None,
-                    'SYSTEM5': new_system if week == 5 else None,
-                    'SYSTEM6': new_system if week == 6 else None,
-                })
+            # entry exists
+            system_attribute = system_mapping.get(week)
+            if system_attribute is not None and getattr(megaship, system_attribute) is None:
+                # entry for this week does not exist, update it
+                match week:
+                    case 1:
+                        megaship.SYSTEM1 = new_system
+                    case 2:
+                        megaship.SYSTEM2 = new_system
+                    case 3:
+                        megaship.SYSTEM3 = new_system
+                    case 4:
+                        megaship.SYSTEM4 = new_system
+                    case 5:
+                        megaship.SYSTEM5 = new_system
+                    case 6:
+                        megaship.SYSTEM6 = new_system
+                session.add(megaship)
+        else:
+            new_megaship = Megaship()
+
+            if week in system_mapping:
+                new_megaship = Megaship(
+                    name=megaship_name, **{system_mapping[week]: new_system}
+                )
+                session.add(new_megaship)
+                return
+            else:
+                raise ValueError("Invalid week number")
     except Exception as e:
-        print(f"Unknown error occured. \n(megaship {megaship_name} system {new_system})\n{e}")
+        print(e)

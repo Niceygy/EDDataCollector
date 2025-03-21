@@ -1,5 +1,7 @@
 print("[0/4] Loading Imports, Please Stand By")
 import zlib
+import sqlalchemy
+from sqlalchemy.orm import sessionmaker
 import zmq
 import simplejson
 import sys
@@ -15,9 +17,9 @@ import os
 from megaships import add_megaship
 from star_systems import add_system
 from stations import add_station, alter_station_data
-from constants import DATABASE_URI, EDDN_TIMEOUT, EDDN_URI, IGNORE_THESE, get_week_of_cycle
+from constants import DATABASE_URI, EDDN_TIMEOUT, EDDN_URI, IGNORE_THESE, get_week_of_cycle, DATABASE_HOST, Megaship, StarSystem, Station
 
-
+Base = sqlalchemy.orm.declarative_base()
 
 
 """
@@ -49,16 +51,20 @@ megaships:
     system5 text
     system6 text
 """
-client = None
+
+
+
+
+
+engine = None
 try:
-    print(f"[1/4] Connecting to MongoDB via {DATABASE_URI}")
-    client = MongoClient(DATABASE_URI)
-    database = client.get_database("elite")
+    print(f"[1/4] Connecting to EliteDB via {DATABASE_HOST}")
+    engine = sqlalchemy.create_engine(DATABASE_URI)
     print("[1/4] Connected.")
 except Exception as e:
     print(e)
     os.exit()
-
+    
 
 print(f"[2/4] Today is week {get_week_of_cycle()} in a 6-week cycle.")
 
@@ -86,7 +92,8 @@ def main():
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
     print(f"[2/4] Loaded")
-
+    Session = sessionmaker(bind=engine)
+    session = Session()
     subscriber.setsockopt(zmq.SUBSCRIBE, b"")
     subscriber.setsockopt(zmq.RCVTIMEO, EDDN_TIMEOUT)
     print(f"[3/4] EDDN Subscription Ready")
@@ -143,7 +150,7 @@ def main():
                                 system_name,
                                 economy,
                                 station_type,
-                                database,
+                                session,
                             )
 
                         case "FSSSignalDiscovered":
@@ -158,14 +165,14 @@ def main():
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
-                                        add_megaship(megaship_name, systemName, database)
+                                        add_megaship(megaship_name, systemName, session)
                                     elif signal["SignalType"] == "StationCoriolis":
                                         station_name = str(signal["SignalName"])
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
                                         add_station(
-                                            database,
+                                            session,
                                             station_name,
                                             "Coriolis",
                                             systemName,
@@ -177,7 +184,7 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_station(
-                                            database,
+                                            session,
                                             station_name,
                                             "Outpost",
                                             systemName,
@@ -189,7 +196,7 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_station(
-                                            database,
+                                            session,
                                             station_name,
                                             "Orbis",
                                             systemName,
@@ -201,7 +208,7 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_station(
-                                            database,
+                                            session,
                                             station_name,
                                             "Ocellus",
                                             systemName,
@@ -258,7 +265,7 @@ def main():
                                 isAnarchy = False
 
                             add_system(
-                                database,
+                                session,
                                 system_name,
                                 latitude,
                                 longitude,
