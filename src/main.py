@@ -279,12 +279,12 @@ def main():
                 print("ZMQSocketException: " + str(e))
                 sys.stdout.flush()
                 subscriber.disconnect(EDDN_URI)
-                client.close()
+                session.close()
                 time.sleep(5)
     except zmq.ZMQError as e:#Exception as e:
         print("Error: " + str(e))
         sys.stdout.flush()
-        client.close()
+        session.close()
         time.sleep(5)
         return
 

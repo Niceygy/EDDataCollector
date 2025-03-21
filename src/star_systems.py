@@ -1,15 +1,15 @@
 from constants import BUBBLE_LIMIT_HIGH, BUBBLE_LIMIT_LOW, StarSystem
-
+from sqlalchemy.orm import sessionmaker as sm
 
 def add_system(
-    session,
-    system_name,
-    latitude,
-    longitude,
-    height,
-    state,
-    shortcode,
-    is_anarchy,
+    session: sm,
+    system_name: str,
+    latitude: int,
+    longitude: int,
+    height: int,
+    state: str,
+    shortcode: str,
+    is_anarchy: bool,
 ):
 
     # Is in bubble?
