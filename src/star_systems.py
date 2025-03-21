@@ -27,6 +27,9 @@ def add_system(
         # is already in database?
         system_collection = database["star_systems"]
         system = system_collection.find_one({"system_name": system_name})
+        
+        if state == '':
+            state = "Unoccupied"
 
         if system is None:
             # not already in db, add it

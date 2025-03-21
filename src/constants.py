@@ -11,7 +11,7 @@ BUBBLE_LIMIT_HIGH = 500
 
 # Database
 DATABASE_HOST = "10.0.0.52"
-DATABASE_URI = f"mongodb://{DATABASE_HOST}:27017"
+DATABASE_URI = f"mongodb://assistant:6556@{DATABASE_HOST}:27017/"
 
 # Filtering
 IGNORE_THESE = [
@@ -20,6 +20,7 @@ IGNORE_THESE = [
     "OnFootSettlement",
     "Colonisation",
     "$EXT_PANEL_ColonisationShip; [inactive]",
+    "'$EXT_PANEL_ColonisationShip:#index=1;'"
 ]
 
 def get_week_of_cycle():

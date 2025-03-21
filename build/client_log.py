@@ -39,7 +39,7 @@ def main():
 
 
                 if "message" in __json:
-                    # if "event" in __json:
+                    # if "FSDJump" in __json:
                         print(simplejson.dumps(__json) + "\n")
                         sys.stdout.flush()
                     # else:

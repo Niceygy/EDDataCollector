@@ -25,7 +25,6 @@ TABLES:
 
 star_systems:
 
-    id: int pri key
     system_name text
     latitude float
     longitude float
@@ -37,7 +36,6 @@ star_systems:
 
 stations:
 
-    id int pri key
     name text
     system text
     type text (Starport, Outpost, PlanetaryPort, Settlement, EngineerBase)
@@ -137,6 +135,7 @@ def main():
                                 or station_type == "OnFootSettlement"
                                 or station_name in IGNORE_THESE
                             ):
+                                # print(f"ingored {station_name}")
                                 continue
 
                             alter_station_data(
@@ -213,9 +212,11 @@ def main():
                             starPos = __json["message"]["StarPos"]
                             shortcode = ""
                             state = ""
-                            if "ControllingPower" in __json["message"]:
-                                power = __json["message"]["ControllingPower"]
+                            if "PowerPlayState" in __json["message"]:
                                 state = __json["message"]["PowerplayState"]
+                                if "ControllingPower" in __json["message"] and state != "Unoccupied":
+                                    power = __json["message"]["ControllingPower"]
+                                
                                 shortcode = ""
                                 match power:
                                     case "Edmund Mahon":
@@ -249,7 +250,6 @@ def main():
                             longitude = starPos[0]
                             height = starPos[2]
                             system_name = __json["message"]["StarSystem"]
-                            # print(system_name)
                             security = __json["message"]["SystemSecurity"]
                             isAnarchy = False
                             if security == "$GAlAXY_MAP_INFO_state_anarchy;":

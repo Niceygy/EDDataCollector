@@ -1,7 +1,8 @@
 FROM python:slim-bullseye
 
 # Copy the current directory contents into the container at /app
-COPY . /home
+COPY ./src /home
+COPY requirements.txt /home
 
 # Set the working directory to /app
 WORKDIR /home
