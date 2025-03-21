@@ -1,7 +1,9 @@
 from sqlalchemy import and_
 from constants import IGNORE_THESE, Station
+from sqlalchemy.orm import sessionmaker as sm
 
-def add_station(session, station_name, station_type, system_name, economy):
+
+def add_station(session: sm, station_name: str, station_type: str, system_name: str, economy: str):
     system_name = str(system_name).replace("'", ".")
     if station_name in IGNORE_THESE:
         return

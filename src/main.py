@@ -1,4 +1,6 @@
 print("[0/4] Loading Imports, Please Stand By")
+
+# Packages
 import zlib
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
@@ -7,7 +9,6 @@ import simplejson
 import sys
 import time
 import datetime
-from pymongo import MongoClient
 import threading
 import queue
 import os
@@ -17,7 +18,14 @@ import os
 from megaships import add_megaship
 from star_systems import add_system
 from stations import add_station, alter_station_data
-from constants import DATABASE_URI, EDDN_TIMEOUT, EDDN_URI, IGNORE_THESE, get_week_of_cycle, DATABASE_HOST, Megaship, StarSystem, Station
+from constants import (
+    DATABASE_URI,
+    EDDN_TIMEOUT,
+    EDDN_URI,
+    IGNORE_THESE,
+    get_week_of_cycle,
+    DATABASE_HOST,
+)
 
 Base = sqlalchemy.orm.declarative_base()
 
@@ -53,9 +61,6 @@ megaships:
 """
 
 
-
-
-
 engine = None
 try:
     print(f"[1/4] Connecting to EliteDB via {DATABASE_HOST}")
@@ -64,7 +69,7 @@ try:
 except Exception as e:
     print(e)
     os.exit()
-    
+
 
 print(f"[2/4] Today is week {get_week_of_cycle()} in a 6-week cycle.")
 
@@ -221,9 +226,12 @@ def main():
                             state = ""
                             if "PowerPlayState" in __json["message"]:
                                 state = __json["message"]["PowerplayState"]
-                                if "ControllingPower" in __json["message"] and state != "Unoccupied":
+                                if (
+                                    "ControllingPower" in __json["message"]
+                                    and state != "Unoccupied"
+                                ):
                                     power = __json["message"]["ControllingPower"]
-                                
+
                                 shortcode = ""
                                 match power:
                                     case "Edmund Mahon":
@@ -281,7 +289,7 @@ def main():
                 subscriber.disconnect(EDDN_URI)
                 session.close()
                 time.sleep(5)
-    except zmq.ZMQError as e:#Exception as e:
+    except zmq.ZMQError as e:  # Exception as e:
         print("Error: " + str(e))
         sys.stdout.flush()
         session.close()
