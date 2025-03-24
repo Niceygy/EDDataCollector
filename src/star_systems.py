@@ -1,15 +1,21 @@
 from constants import BUBBLE_LIMIT_HIGH, BUBBLE_LIMIT_LOW, StarSystem
 from sqlalchemy.orm import sessionmaker as sm
 
-def add_system(
+from powers import update_power_data
+
+
+def update_system(
     session: sm,
+    # system data
     system_name: str,
     latitude: int,
     longitude: int,
     height: int,
-    state: str,
-    shortcode: str,
     is_anarchy: bool,
+    # powerplay
+    shortcode: str,
+    state: str,
+    controlPoints: float,
 ):
 
     # Is in bubble?
@@ -26,9 +32,6 @@ def add_system(
         system_name = str(system_name).replace("'", ".")
         # is already in database?
         system = session.query(StarSystem).filter_by(system_name=system_name).first()
-        
-        if state == '':
-            state = "Unoccupied"
 
         if system is None:
             # not already in db, add it
@@ -37,8 +40,6 @@ def add_system(
                 latitude=latitude,
                 longitude=longitude,
                 height=height,
-                state=state,
-                shortcode=shortcode,
                 is_anarchy=is_anarchy,
             )
             session.add(new_system)
@@ -47,13 +48,10 @@ def add_system(
                 # part filled in, finish the rest
                 # Update a single record in the add_system function
                 system.height = height
-                system.latitude = latitude,
+                system.latitude = (latitude,)
                 system.longitude = longitude
-                system.shortcode = shortcode
-                system.state = state
                 system.is_anarchy = is_anarchy
             else:
                 # already in db, update
-                system.shortcode = shortcode
-                system.state = state
                 system.is_anarchy = is_anarchy
+        update_power_data(system_name, shortcode, state, controlPoints, session)

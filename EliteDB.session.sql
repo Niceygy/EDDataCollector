@@ -1,1 +1,2 @@
-SELECT * FROM star_systems WHERE system_name LIKE "%Col 285 Sector DD-V b18-0%";
+ALTER TABLE star_systems drop COLUMN state;
+ALTER TABLE star_systems drop COLUMN shortcode;

@@ -42,8 +42,8 @@ class StarSystem(Base):
     latitude = Column(Float)
     longitude = Column(Float)
     height = Column(Float)
-    state = Column(String(255))
-    shortcode = Column(String(255))
+    #state = Column(String(255))
+    #shortcode = Column(String(255))
     is_anarchy = Column(Boolean)
 
 
@@ -65,3 +65,11 @@ class Megaship(Base):
     SYSTEM4 = Column(String(255))
     SYSTEM5 = Column(String(255))
     SYSTEM6 = Column(String(255))
+    
+class PowerData(Base):
+    __tablename__ = "powerdata"
+    system_name = Column(String(50), primary_key=True)
+    state = Column(String(20))
+    shortcode = Column(String(4))
+    controlPointsStart = Column(Float())
+    controlPointsLatest = Column(Float())

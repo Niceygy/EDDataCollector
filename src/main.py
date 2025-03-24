@@ -16,8 +16,9 @@ import os
 # Local
 
 from megaships import add_megaship
-from star_systems import add_system
+from star_systems import update_system
 from stations import add_station, alter_station_data
+from powers import update_power_data
 from constants import (
     DATABASE_URI,
     EDDN_TIMEOUT,
@@ -224,13 +225,15 @@ def main():
                             starPos = __json["message"]["StarPos"]
                             shortcode = ""
                             state = ""
-                            if "PowerPlayState" in __json["message"]:
+                            if "PowerplayState" in __json["message"]:
                                 state = __json["message"]["PowerplayState"]
                                 if (
                                     "ControllingPower" in __json["message"]
                                     and state != "Unoccupied"
                                 ):
                                     power = __json["message"]["ControllingPower"]
+                                elif "Powers" in __json["message"]:
+                                    power = __json["message"]["Powers"][0]
 
                                 shortcode = ""
                                 match power:
@@ -271,17 +274,29 @@ def main():
                                 isAnarchy = True
                             else:
                                 isAnarchy = False
-
-                            add_system(
+                            
+                            controlPoints = 0    
+                            if "PowerplayConflictProgress" in __json["message"]:
+                                #system in confict, assign to the winning power as of now
+                                controlPoints = __json["message"]["PowerplayConflictProgress"][0]["ConflictProgress"]                          
+                            elif "PowerplayStateControlProgress" in __json["message"]:
+                                controlPoints = __json['message']['PowerplayStateControlProgress']
+                            
+                            
+                            update_system(
                                 session,
+                                #system data
                                 system_name,
                                 latitude,
                                 longitude,
                                 height,
-                                state,
-                                shortcode,
                                 isAnarchy,
+                                #powerplay
+                                shortcode,
+                                state,
+                                controlPoints
                             )
+
 
             except zmq.ZMQError as e:
                 print("ZMQSocketException: " + str(e))
