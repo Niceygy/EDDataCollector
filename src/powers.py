@@ -4,9 +4,12 @@ from constants import PowerData
 
 
 def update_power_data(
-    system_name: str, shortcode: str, state: str, controlPoints: str, session: sm
+    system_name: str, shortcode: str, state: str, controlPoints: float, session: sm
 ):
     system_name = str(system_name).replace("'", ".")
+    if state == "Unoccupied" or state == '':
+        #we only want powerplay systems!
+        return
 
     entry = (
         session.query(PowerData)
@@ -24,12 +27,12 @@ def update_power_data(
         )
         session.add(new_powerdata)
     else:
-        if entry.state != '':
-            i = 0
         if entry.state != state:
             entry.state = state
             entry.shortcode = shortcode
             entry.controlPointsStart = controlPoints
         else:
+            # print(f"updated {system_name} to {controlPoints} pts")
             entry.controlPointsStart = controlPoints
+        session.commit()
     return

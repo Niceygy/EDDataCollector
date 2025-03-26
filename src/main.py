@@ -18,7 +18,6 @@ import os
 from megaships import add_megaship
 from star_systems import update_system
 from stations import add_station, alter_station_data
-from powers import update_power_data
 from constants import (
     DATABASE_URI,
     EDDN_TIMEOUT,
@@ -59,6 +58,13 @@ megaships:
     system4 text
     system5 text
     system6 text
+
+powerdata:
+    system_name text pri key
+    state text
+    shortcode text
+    controlPointsStart float
+    controlPointsLatest float
 """
 
 
@@ -98,7 +104,7 @@ def main():
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
     print(f"[2/4] Loaded")
-    Session = sessionmaker(bind=engine)
+    Session = sessionmaker(bind=engine, autoflush=True)
     session = Session()
     subscriber.setsockopt(zmq.SUBSCRIBE, b"")
     subscriber.setsockopt(zmq.RCVTIMEO, EDDN_TIMEOUT)
@@ -108,6 +114,7 @@ def main():
     threading.Thread(
         target=count_messages_per_minute, daemon=True, args=(message_queue,)
     ).start()
+
 
     try:
         subscriber.connect(EDDN_URI)
@@ -150,11 +157,8 @@ def main():
                                 or "EXT_PANEL" in station_name
                                 or "Construction Site" in station_name
                             ):
-                                # print(f"ingored {station_name}")
                                 continue
                             else:
-                                # print(f"{station_name} in {system_name} is {economy}")
-
                                 alter_station_data(
                                     station_name,
                                     system_name,
@@ -301,16 +305,18 @@ def main():
                                 # powerplay
                                 shortcode,
                                 state,
-                                controlPoints,
+                                float(controlPoints),
                             )
-
+                    session.commit()
+                    session.flush()
+                    
             except zmq.ZMQError as e:
                 print("ZMQSocketException: " + str(e))
                 sys.stdout.flush()
                 subscriber.disconnect(EDDN_URI)
                 session.close()
                 time.sleep(5)
-    except zmq.ZMQError as e:  # Exception as e:
+    except  Exception as e:
         print("Error: " + str(e))
         sys.stdout.flush()
         session.close()
