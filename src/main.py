@@ -25,47 +25,10 @@ from constants import (
     IGNORE_THESE,
     get_week_of_cycle,
     DATABASE_HOST,
+    should_be_ignored,
 )
 
 Base = sqlalchemy.orm.declarative_base()
-
-
-"""
-TABLES:
-
-star_systems:
-
-    system_name text
-    latitude float
-    longitude float
-    height float
-    state text (powerplay state)
-    shortcode text (power shortcode)
-    is_anarchy bool
-    has_res_sites bool
-
-stations:
-
-    name text
-    system text
-    type text (Starport, Outpost, PlanetaryPort, Settlement, EngineerBase)
-
-megaships: 
-    name text pri key
-    system1 text
-    system2 text
-    system3 text
-    system4 text
-    system5 text
-    system6 text
-
-powerdata:
-    system_name text pri key
-    state text
-    shortcode text
-    controlPointsStart float
-    controlPointsLatest float
-"""
 
 
 engine = None
@@ -150,12 +113,8 @@ def main():
                             station_name = str(__json["message"]["StationName"])
                             station_type = str(__json["message"]["StationType"])
                             if (
-                                economy == "Carrier"
-                                or station_name == "System Colonisation Ship"
-                                or station_type == "OnFootSettlement"
-                                or station_name in IGNORE_THESE
-                                or "EXT_PANEL" in station_name
-                                or "Construction Site" in station_name
+                                should_be_ignored(station_name) or
+                                should_be_ignored(economy)
                             ):
                                 continue
                             else:
@@ -309,7 +268,7 @@ def main():
                             )
                     session.commit()
                     session.flush()
-                    
+
             except zmq.ZMQError as e:
                 print("ZMQSocketException: " + str(e))
                 sys.stdout.flush()

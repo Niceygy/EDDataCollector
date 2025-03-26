@@ -26,8 +26,17 @@ IGNORE_THESE = [
     "OnFootSettlement",
     "Colonisation",
     "$EXT_PANEL_ColonisationShip; [inactive]",
-    "'$EXT_PANEL_ColonisationShip:#index=1;'"
+    "'$EXT_PANEL_ColonisationShip:#index=",
+    "Carrier",
+    "EXT_PANEL",
+    "Construction Site"
 ]
+
+def should_be_ignored(item: str) -> bool:
+    for ingore in IGNORE_THESE:
+        if ingore in item:
+            return True
+    return False
 
 def get_week_of_cycle():
     with open("week.txt", "r") as f:
@@ -36,18 +45,56 @@ def get_week_of_cycle():
     return int(data)
 
 
+"""
+TABLES:
+
+star_systems:
+
+    system_name text
+    latitude float
+    longitude float
+    height float
+    state text (powerplay state)
+    shortcode text (power shortcode)
+    is_anarchy bool
+    has_res_sites bool
+
+stations:
+
+    name text
+    system text
+    type text (Starport, Outpost, PlanetaryPort, Settlement, EngineerBase)
+
+megaships: 
+    name text pri key
+    system1 text
+    system2 text
+    system3 text
+    system4 text
+    system5 text
+    system6 text
+
+powerdata:
+    system_name text pri key
+    state text
+    shortcode text
+    controlPointsStart float
+    controlPointsLatest float
+"""
+
 class StarSystem(Base):
     __tablename__ = "star_systems"
     system_name = Column(String(255), primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)
     height = Column(Float)
-    #state = Column(String(255))
-    #shortcode = Column(String(255))
     is_anarchy = Column(Boolean)
 
 
 class Station(Base):
+    """
+    Represents a entry in the stations table
+    """
     __tablename__ = "stations"
     id = Column(Integer, primary_key=True, autoincrement=True)
     station_name = Column(String(255))
