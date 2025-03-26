@@ -8,7 +8,7 @@ COPY requirements.txt /home
 WORKDIR /home
 
 # Install dependencies
-RUN python3 -m pip install --upgrade pip
+# RUN python3 -m pip install --upgrade pip
 RUN pip install -r requirements.txt
 # Run app.py when the container launches
 CMD ["python3", "main.py"]

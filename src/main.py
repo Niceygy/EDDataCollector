@@ -147,17 +147,21 @@ def main():
                                 or station_name == "System Colonisation Ship"
                                 or station_type == "OnFootSettlement"
                                 or station_name in IGNORE_THESE
+                                or "EXT_PANEL" in station_name
+                                or "Construction Site" in station_name
                             ):
                                 # print(f"ingored {station_name}")
                                 continue
+                            else:
+                                # print(f"{station_name} in {system_name} is {economy}")
 
-                            alter_station_data(
-                                station_name,
-                                system_name,
-                                economy,
-                                station_type,
-                                session,
-                            )
+                                alter_station_data(
+                                    station_name,
+                                    system_name,
+                                    economy,
+                                    station_type,
+                                    session,
+                                )
 
                         case "FSSSignalDiscovered":
                             for signal in __json["message"]["signals"]:
@@ -274,29 +278,31 @@ def main():
                                 isAnarchy = True
                             else:
                                 isAnarchy = False
-                            
-                            controlPoints = 0    
+
+                            controlPoints = 0
                             if "PowerplayConflictProgress" in __json["message"]:
-                                #system in confict, assign to the winning power as of now
-                                controlPoints = __json["message"]["PowerplayConflictProgress"][0]["ConflictProgress"]                          
+                                # system in confict, assign to the winning power as of now
+                                controlPoints = __json["message"][
+                                    "PowerplayConflictProgress"
+                                ][0]["ConflictProgress"]
                             elif "PowerplayStateControlProgress" in __json["message"]:
-                                controlPoints = __json['message']['PowerplayStateControlProgress']
-                            
-                            
+                                controlPoints = __json["message"][
+                                    "PowerplayStateControlProgress"
+                                ]
+
                             update_system(
                                 session,
-                                #system data
+                                # system data
                                 system_name,
                                 latitude,
                                 longitude,
                                 height,
                                 isAnarchy,
-                                #powerplay
+                                # powerplay
                                 shortcode,
                                 state,
-                                controlPoints
+                                controlPoints,
                             )
-
 
             except zmq.ZMQError as e:
                 print("ZMQSocketException: " + str(e))
