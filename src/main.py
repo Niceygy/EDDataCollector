@@ -22,10 +22,11 @@ from constants import (
     DATABASE_URI,
     EDDN_TIMEOUT,
     EDDN_URI,
-    IGNORE_THESE,
     get_week_of_cycle,
     DATABASE_HOST,
     should_be_ignored,
+    VALID_CLIENT_VERSION,
+    MESSAGE_TIMEOUT
 )
 
 Base = sqlalchemy.orm.declarative_base()
@@ -61,6 +62,27 @@ def count_messages_per_minute(q):
             q.get()
             message_count += 1
 
+def is_message_valid(message: dict) -> bool:
+    try:
+        if "event" not in message["message"]:
+            return False
+        #client version
+        client_version = message["header"]["gameversion"]
+        if client_version == VALID_CLIENT_VERSION:
+            #message age
+            message_timestamp = datetime.datetime.strptime(message["message"]['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
+            gateway_timestamp = datetime.datetime.strptime(message["header"]["gatewayTimestamp"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            time_difference = (message_timestamp - gateway_timestamp).total_seconds() / 60
+            if time_difference > MESSAGE_TIMEOUT:
+                return False
+            else:
+                return True
+        else:
+            return False
+    except Exception:
+        return False
+        
+    
 
 def main():
     time.sleep(5)
@@ -96,7 +118,7 @@ def main():
                 __message = zlib.decompress(__message)
                 __json = simplejson.loads(__message)
 
-                if "event" in __json["message"]:
+                if is_message_valid(__json):
                     match __json["message"]["event"]:
                         case "Docked":
                             economy = None

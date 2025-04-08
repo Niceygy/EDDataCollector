@@ -10,6 +10,9 @@ Base = sqlalchemy.orm.declarative_base()
 # EDDN
 EDDN_URI = "tcp://eddn.edcd.io:9500"
 EDDN_TIMEOUT = 600000
+VALID_CLIENT_VERSION = '4.1.1.0'
+MESSAGE_TIMEOUT = 5
+"""How many minutes until a message is considered old?"""
 
 # Bubble Limits
 BUBBLE_LIMIT_LOW = -500
@@ -29,7 +32,11 @@ IGNORE_THESE = [
     "'$EXT_PANEL_ColonisationShip:#index=",
     "Carrier",
     "EXT_PANEL",
-    "Construction Site"
+    "Construction Site",
+    "$EXT_PANEL_ColonisationShip:#index=",
+    "$EXT_PANEL_ColonisationShip:#index=1;",
+    "$EXT_PANEL_ColonisationShip:#index=2;",
+    "$EXT_PANEL_ColonisationShip:#index=3;"
 ]
 
 def should_be_ignored(item: str) -> bool:
