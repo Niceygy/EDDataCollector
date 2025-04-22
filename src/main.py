@@ -96,9 +96,9 @@ def main():
     print(f"[3/4] EDDN Subscription Ready")
 
     # Start the message counter thread
-    threading.Thread(
-        target=count_messages_per_minute, daemon=True, args=(message_queue,)
-    ).start()
+    # threading.Thread(
+    #     target=count_messages_per_minute, daemon=True, args=(message_queue,)
+    # ).start()
 
 
     try:
@@ -242,7 +242,8 @@ def main():
                                         shortcode = "JRA"
                                     case "Nakato Kaine":
                                         shortcode = "NAK"
-                                    case "Archon Delane":
+                                    case "Archon Delaine":
+                                        #Archon Delaine
                                         shortcode = "ARD"
                                     case "Li Yong-Rui":
                                         shortcode = "LYR"

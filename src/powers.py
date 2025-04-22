@@ -22,17 +22,13 @@ def update_power_data(
             system_name=system_name,
             state=state,
             shortcode=shortcode,
-            controlPointsStart=0,
-            controlPointsLatest=controlPoints,
+            # controlPointsStart=0,
+            # controlPointsLatest=controlPoints,
         )
         session.add(new_powerdata)
     else:
         if entry.state != state:
             entry.state = state
             entry.shortcode = shortcode
-            if controlPoints != None: entry.controlPointsLatest = controlPoints
-        else:
-            # print(f"updated {system_name} to {controlPoints} pts")
-            if controlPoints != None: entry.controlPointsLatest = controlPoints
         session.commit()
     return

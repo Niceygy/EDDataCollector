@@ -125,5 +125,5 @@ class PowerData(Base):
     system_name = Column(String(50), primary_key=True)
     state = Column(String(20))
     shortcode = Column(String(4))
-    controlPointsStart = Column(Float())
-    controlPointsLatest = Column(Float())
+    # controlPointsStart = Column(Float())
+    # controlPointsLatest = Column(Float())
