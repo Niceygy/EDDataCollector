@@ -46,7 +46,6 @@ def update_system(
         else:
             if system is None or system.height is None:
                 # part filled in, finish the rest
-                # Update a single record in the add_system function
                 system.height = height
                 system.latitude = (latitude,)
                 system.longitude = longitude

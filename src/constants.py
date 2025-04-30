@@ -1,5 +1,5 @@
 import sqlalchemy
-from sqlalchemy import String, Column, Boolean, Integer, Float 
+from sqlalchemy import String, Column, Boolean, Integer, Float
 
 Base = sqlalchemy.orm.declarative_base()
 
@@ -10,7 +10,7 @@ Base = sqlalchemy.orm.declarative_base()
 # EDDN
 EDDN_URI = "tcp://eddn.edcd.io:9500"
 EDDN_TIMEOUT = 600000
-VALID_CLIENT_VERSION = '4.1.1.0'
+VALID_CLIENT_VERSION = ["4", "1", "1", "0"]
 MESSAGE_TIMEOUT = 5
 """How many minutes until a message is considered old?"""
 
@@ -36,14 +36,16 @@ IGNORE_THESE = [
     "$EXT_PANEL_ColonisationShip:#index=",
     "$EXT_PANEL_ColonisationShip:#index=1;",
     "$EXT_PANEL_ColonisationShip:#index=2;",
-    "$EXT_PANEL_ColonisationShip:#index=3;"
+    "$EXT_PANEL_ColonisationShip:#index=3;",
 ]
+
 
 def should_be_ignored(item: str) -> bool:
     for ingore in IGNORE_THESE:
         if ingore in item:
             return True
     return False
+
 
 def get_week_of_cycle():
     with open("week.txt", "r") as f:
@@ -89,6 +91,7 @@ powerdata:
     controlPointsLatest float
 """
 
+
 class StarSystem(Base):
     __tablename__ = "star_systems"
     system_name = Column(String(255), primary_key=True)
@@ -102,6 +105,7 @@ class Station(Base):
     """
     Represents a entry in the stations table
     """
+
     __tablename__ = "stations"
     id = Column(Integer, primary_key=True, autoincrement=True)
     station_name = Column(String(255))
@@ -119,7 +123,8 @@ class Megaship(Base):
     SYSTEM4 = Column(String(255))
     SYSTEM5 = Column(String(255))
     SYSTEM6 = Column(String(255))
-    
+
+
 class PowerData(Base):
     __tablename__ = "powerdata"
     system_name = Column(String(50), primary_key=True)

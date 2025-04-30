@@ -9,8 +9,6 @@ import simplejson
 import sys
 import time
 import datetime
-import threading
-import queue
 import os
 
 # Local
@@ -44,31 +42,23 @@ except Exception as e:
 
 print(f"[2/4] Today is week {get_week_of_cycle()} in a 6-week cycle.")
 
-
-# Create a queue to store messages
-message_queue = queue.Queue()
-
-
-# Ensure messages are properly removed from the message_queue
-def count_messages_per_minute(q):
-    global message_count
-    message_count = 0
-    while True:
-        time.sleep(60 * 60)
-        timestr = f"{datetime.datetime.now().date()} {datetime.datetime.now().time()}"
-        open("mpm.txt", "a").write(f"{message_count},{timestr}\n")
-        message_count = 0
-        while not q.empty():
-            q.get()
-            message_count += 1
-
 def is_message_valid(message: dict) -> bool:
     try:
         if "event" not in message["message"]:
             return False
         #client version
         client_version = message["header"]["gameversion"]
-        if client_version == VALID_CLIENT_VERSION:
+        client_version = str(client_version).split(".")
+        good = False
+        for i in range(len(client_version)):
+            try:
+                if int(client_version[i]) >= int(VALID_CLIENT_VERSION[i]):
+                    good = True
+                else:
+                    good = False
+            except Exception:
+                good = False
+        if good:
             #message age
             message_timestamp = datetime.datetime.strptime(message["message"]['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
             gateway_timestamp = datetime.datetime.strptime(message["header"]["gatewayTimestamp"], "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -95,11 +85,6 @@ def main():
     subscriber.setsockopt(zmq.RCVTIMEO, EDDN_TIMEOUT)
     print(f"[3/4] EDDN Subscription Ready")
 
-    # Start the message counter thread
-    # threading.Thread(
-    #     target=count_messages_per_minute, daemon=True, args=(message_queue,)
-    # ).start()
-
 
     try:
         subscriber.connect(EDDN_URI)
@@ -108,7 +93,6 @@ def main():
         while True:
             try:
                 __message = subscriber.recv()
-                message_queue.put(__message)
 
                 if __message == False:
                     subscriber.disconnect(EDDN_URI)
@@ -243,7 +227,6 @@ def main():
                                     case "Nakato Kaine":
                                         shortcode = "NAK"
                                     case "Archon Delaine":
-                                        #Archon Delaine
                                         shortcode = "ARD"
                                     case "Li Yong-Rui":
                                         shortcode = "LYR"
