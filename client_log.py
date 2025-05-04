@@ -37,8 +37,7 @@ def main():
                 __json      = simplejson.loads(__message)
                 
                 # call dumps() to ensure double quotes in output
-                print(simplejson.dumps(__json))
-                sys.stdout.flush()
+                open("client_log.jsonl", "a").write(f"\n{simplejson.dumps(__json)}")
                 
         except zmq.ZMQError as e:
             print ('ZMQSocketException: ' + str(e))

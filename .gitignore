@@ -2,3 +2,4 @@ database.db
 temp.jsonl
 .venv
 src/__pycache__
+client_log.jsonl

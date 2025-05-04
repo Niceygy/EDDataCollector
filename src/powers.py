@@ -7,7 +7,7 @@ def update_power_data(
     system_name: str, shortcode: str, state: str, controlPoints: float, session: sm
 ):
     system_name = str(system_name).replace("'", ".")
-    if state == "Unoccupied" or state == '':
+    if state == '':
         #we only want powerplay systems!
         return
 
