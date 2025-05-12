@@ -217,7 +217,10 @@ def main():
                                 elif "Powers" in __json["message"]:
                                     power = __json["message"]["Powers"][0]
 
+                            try:
                                 shortcode = power_full_to_short(power)
+                            except Exception:
+                                None
 
                             power_conflict = False
                             power_opposition = ""
@@ -231,7 +234,7 @@ def main():
                                     shortcode = power_full_to_short(
                                         conflict_progress[0]["Power"]
                                     )
-                                    if len(conflict_progress) > 1 and conflict_progress[1]['ConflictProgress'] > 0.2:
+                                    if len(conflict_progress) > 1: #and conflict_progress[1]['ConflictProgress'] > 0.2:
                                         power_opposition = power_full_to_short(
                                             conflict_progress[1]["Power"]
                                         )
