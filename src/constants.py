@@ -39,6 +39,22 @@ IGNORE_THESE = [
     "$EXT_PANEL_ColonisationShip:#index=3;",
 ]
 
+def power_full_to_short(power: str) -> str:
+    """
+    Returns the shortcode of a power when supplied its full name
+    """
+    for key, value in POWERS.items():
+        if value == power:
+            return key
+    return ""
+
+def short_to_full_power(power: str) -> str:
+    """
+    Retuns the full name of a power when supplied its shortcode
+    """
+    if power == '':
+        return ""
+    return POWERS[power]
 
 def should_be_ignored(item: str) -> bool:
     for ingore in IGNORE_THESE:
@@ -112,13 +128,4 @@ class PowerData(Base):
     shortcode = Column(String(4))
     war = Column(BOOLEAN(False))
     war_start = Column(Integer())
-
-
-class PowerPoints(Base):
-    __tablename__ = "powerpoints"
-    id = Column(Integer, primary_key=True)
-    shortcode = Column(String, nullable=False)
-    exploited = Column(Integer, nullable=False)
-    fortified = Column(Integer, nullable=False)
-    stronghold = Column(Integer, nullable=False)
-    cycle = Column(Integer, nullable=False)
+    opposition = Column(String(4))

@@ -10,10 +10,12 @@ import sys
 import time
 import datetime
 import os
+import math
 
 # Local
 
 from megaships import add_megaship
+from powers import update_power_data
 from star_systems import update_system
 from stations import add_station, alter_station_data
 from constants import (
@@ -22,9 +24,10 @@ from constants import (
     EDDN_URI,
     get_week_of_cycle,
     DATABASE_HOST,
+    power_full_to_short,
     should_be_ignored,
     VALID_CLIENT_VERSION,
-    MESSAGE_TIMEOUT
+    MESSAGE_TIMEOUT,
 )
 
 Base = sqlalchemy.orm.declarative_base()
@@ -32,21 +35,25 @@ Base = sqlalchemy.orm.declarative_base()
 
 engine = None
 try:
-    print(f"[1/4] Connecting to EliteDB via {DATABASE_HOST}")
     engine = sqlalchemy.create_engine(DATABASE_URI)
-    print("[1/4] Connected.")
+    print(f"[1/4] Connected to EliteDB via {DATABASE_HOST}")
 except Exception as e:
     print(e)
     os.exit()
 
+powerplay_startdate = datetime.datetime(2024, 10, 31, 8)
+now = datetime.datetime.now()
+cycle = (now - powerplay_startdate).days / 7
+cycle = math.trunc(cycle)
 
-print(f"[2/4] Today is week {get_week_of_cycle()} in a 6-week cycle.")
+print(f"[2/4] Megaship week {get_week_of_cycle()}/6. PowerPlay Cycle {cycle}.")
+
 
 def is_message_valid(message: dict) -> bool:
     try:
         if "event" not in message["message"]:
             return False
-        #client version
+        # client version
         client_version = message["header"]["gameversion"]
         client_version = str(client_version).split(".")
         good = False
@@ -59,10 +66,16 @@ def is_message_valid(message: dict) -> bool:
             except Exception:
                 good = False
         if good:
-            #message age
-            message_timestamp = datetime.datetime.strptime(message["message"]['timestamp'], "%Y-%m-%dT%H:%M:%SZ")
-            gateway_timestamp = datetime.datetime.strptime(message["header"]["gatewayTimestamp"], "%Y-%m-%dT%H:%M:%S.%fZ")
-            time_difference = (message_timestamp - gateway_timestamp).total_seconds() / 60
+            # message age
+            message_timestamp = datetime.datetime.strptime(
+                message["message"]["timestamp"], "%Y-%m-%dT%H:%M:%SZ"
+            )
+            gateway_timestamp = datetime.datetime.strptime(
+                message["header"]["gatewayTimestamp"], "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
+            time_difference = (
+                message_timestamp - gateway_timestamp
+            ).total_seconds() / 60
             if time_difference > MESSAGE_TIMEOUT:
                 return False
             else:
@@ -71,20 +84,17 @@ def is_message_valid(message: dict) -> bool:
             return False
     except Exception:
         return False
-        
-    
+
 
 def main():
     time.sleep(5)
     context = zmq.Context()
     subscriber = context.socket(zmq.SUB)
-    print(f"[2/4] Loaded")
     Session = sessionmaker(bind=engine, autoflush=True)
     session = Session()
     subscriber.setsockopt(zmq.SUBSCRIBE, b"")
     subscriber.setsockopt(zmq.RCVTIMEO, EDDN_TIMEOUT)
     print(f"[3/4] EDDN Subscription Ready")
-
 
     try:
         subscriber.connect(EDDN_URI)
@@ -118,9 +128,8 @@ def main():
                             system_name = str(__json["message"]["StarSystem"])
                             station_name = str(__json["message"]["StationName"])
                             station_type = str(__json["message"]["StationType"])
-                            if (
-                                should_be_ignored(station_name) or
-                                should_be_ignored(economy)
+                            if should_be_ignored(station_name) or should_be_ignored(
+                                economy
                             ):
                                 continue
                             else:
@@ -208,40 +217,26 @@ def main():
                                 elif "Powers" in __json["message"]:
                                     power = __json["message"]["Powers"][0]
 
-                                shortcode = ""
-                                match power:
-                                    case "Edmund Mahon":
-                                        shortcode = "EMH"
-                                    case "A. Lavigny-Duval":
-                                        shortcode = "ALD"
-                                    case "Aisling Duval":
-                                        shortcode = "ASD"
-                                    case "Yuri Grom":
-                                        shortcode = "YRG"
-                                    case "Pranav Antal":
-                                        shortcode = "PRA"
-                                    case "Denton Patreus":
-                                        shortcode = "DPT"
-                                    case "Jerome Archer":
-                                        shortcode = "JRA"
-                                    case "Nakato Kaine":
-                                        shortcode = "NAK"
-                                    case "Archon Delaine":
-                                        shortcode = "ARD"
-                                    case "Li Yong-Rui":
-                                        shortcode = "LYR"
-                                    case "Felicia Winters":
-                                        shortcode = "FLW"
-                                    case "Zemina Torval":
-                                        shortcode = "ZMT"
-                                    case _:
-                                        shortcode = ""
+                                shortcode = power_full_to_short(power)
 
                             power_conflict = False
-                            if 'PowerplayConflictProgress' in __json['message']:
-                                power_conflict = True
-                                
-                                
+                            power_opposition = ""
+                            if "PowerplayConflictProgress" in __json["message"]:
+                                conflict_progress = sorted(
+                                    __json["message"]["PowerplayConflictProgress"],
+                                    key=lambda x: x["ConflictProgress"],
+                                    reverse=True,
+                                )
+                                if len(conflict_progress) > 0:
+                                    shortcode = power_full_to_short(
+                                        conflict_progress[0]["Power"]
+                                    )
+                                if len(conflict_progress) > 1:
+                                    power_opposition = power_full_to_short(
+                                        conflict_progress[1]["Power"]
+                                    )
+                                    power_conflict = True
+
                             # location
                             latitude = starPos[1]
                             longitude = starPos[0]
@@ -254,7 +249,6 @@ def main():
                             else:
                                 isAnarchy = False
 
-
                             update_system(
                                 session,
                                 # system data
@@ -263,10 +257,14 @@ def main():
                                 longitude,
                                 height,
                                 isAnarchy,
-                                # powerplay
-                                shortcode,
-                                state,
-                                power_conflict
+                            )
+                            update_power_data(
+                                system_name=system_name,
+                                shortcode=shortcode,
+                                state=state,
+                                power_conflict=power_conflict,
+                                conflict_opposing=power_opposition,
+                                session=session,
                             )
                     session.commit()
                     session.flush()
@@ -277,7 +275,7 @@ def main():
                 subscriber.disconnect(EDDN_URI)
                 session.close()
                 time.sleep(5)
-    except  Exception as e:
+    except Exception as e:
         print("Error: " + str(e))
         sys.stdout.flush()
         session.close()

@@ -1,0 +1,54 @@
+{
+  "$schemaRef": "https://eddn.edcd.io/schemas/journal/1",
+  "header": {
+    "gamebuild": "r313544/r0 ",
+    "gameversion": "4.1.2.100",
+    "gatewayTimestamp": "2025-05-12T08:10:31.101659Z",
+    "softwareName": "E:D Market Connector [Windows]",
+    "softwareVersion": "5.13.0",
+    "uploaderID": "b03c1b341c6f6d59c33e8cad519e5b887508bea6"
+  },
+  "message": {
+    "Body": "ICZ OI-S b4-3",
+    "BodyID": 0,
+    "BodyType": "Star",
+    "Factions": [
+      {
+        "Allegiance": "Independent",
+        "FactionState": "None",
+        "Government": "Dictatorship",
+        "Happiness": "$Faction_HappinessBand2;",
+        "Influence": 0.016129,
+        "Name": "Party of Yoru",
+        "PendingStates": [{ "State": "Retreat", "Trend": 0 }]
+      },
+      { "Allegiance": "Independent", "FactionState": "None", "Government": "Anarchy", "Happiness": "$Faction_HappinessBand2;", "Influence": 0.010081, "Name": "Karid Blue Camorra" },
+      { "Allegiance": "Empire", "FactionState": "War", "Government": "Corporate", "Happiness": "$Faction_HappinessBand2;", "Influence": 0.169355, "Name": "CD-79 950 Gold Energy Services" },
+      { "Allegiance": "Empire", "FactionState": "None", "Government": "Patronage", "Happiness": "$Faction_HappinessBand2;", "Influence": 0.238911, "Name": "Terra's Ade Sentinels" },
+      { "ActiveStates": [{ "State": "Boom" }], "Allegiance": "Empire", "FactionState": "Boom", "Government": "Corporate", "Happiness": "", "Influence": 0.565524, "Name": "Daily Routine Incorporated" }
+    ],
+    "Multicrew": false,
+    "Population": 44039520,
+    "PowerplayConflictProgress": [
+      { "ConflictProgress": 0.382075, "Power": "Aisling Duval" },
+      { "ConflictProgress": 0.000908, "Power": "Zemina Torval" },
+      { "ConflictProgress": 0.000801, "Power": "Archon Delane" }
+    ],
+    "PowerplayState": "Unoccupied",
+    "Powers": ["Aisling Duval", "Zemina Torval"],
+    "StarPos": [88.0, -88.40625, 57.0],
+    "StarSystem": "ICZ OI-S b4-3",
+    "SystemAddress": 7269097678273,
+    "SystemAllegiance": "Empire",
+    "SystemEconomy": "$economy_Industrial;",
+    "SystemFaction": { "FactionState": "Boom", "Name": "Daily Routine Incorporated" },
+    "SystemGovernment": "$government_Corporate;",
+    "SystemSecondEconomy": "$economy_Extraction;",
+    "SystemSecurity": "$SYSTEM_SECURITY_high;",
+    "Taxi": false,
+    "event": "FSDJump",
+    "horizons": true,
+    "odyssey": true,
+    "timestamp": "2025-05-12T08:10:29Z"
+  }
+}

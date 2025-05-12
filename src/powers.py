@@ -1,12 +1,17 @@
 from datetime import datetime
 import math
-from sqlalchemy import and_, func
+from sqlalchemy import and_
 from sqlalchemy.orm import sessionmaker as sm
 from constants import PowerData
 
 
 def update_power_data(
-    system_name: str, shortcode: str, state: str, power_conflict: bool, session: sm
+    system_name: str,
+    shortcode: str,
+    state: str,
+    power_conflict: bool,
+    conflict_opposing: str,
+    session: sm,
 ):
     system_name = str(system_name).replace("'", ".")
     if state == "":
@@ -28,6 +33,7 @@ def update_power_data(
                     shortcode=shortcode,
                     war=True,
                     war_start=powerplay_cycle(),
+                    opposition=conflict_opposing
                 )
             )
         else:
@@ -39,17 +45,24 @@ def update_power_data(
                 )
             )
     else:
-        if entry.war_start is not None and entry.war_start < (powerplay_cycle() - 2) and entry.war:
+        if (
+            entry.war_start is not None
+            and entry.war_start < (powerplay_cycle() - 2)
+            and entry.war
+        ):
             entry.war = False
+            entry.war_start = None
+            entry.opposition = None
         elif not entry.war and power_conflict:
-            #war not in db, but is in power_conflict
+            # war not in db, but is in power_conflict
             entry.war = power_conflict
             entry.war_start = powerplay_cycle()
+            entry.opposition = conflict_opposing
 
         if entry.state != state:
             entry.state = state
             entry.shortcode = shortcode
-        
+
         session.commit()
     return
 

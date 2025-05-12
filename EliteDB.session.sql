@@ -1,7 +1,2 @@
-CREATE TABLE IF NOT EXISTS powerpoints (
-    id INT PRIMARY KEY,
-    shortcode VARCHAR(4),
-    exploited INT,
-    fortified INT,
-    stronghold INT
-)
+UPDATE powerdata SET war = NULL;
+UPDATE powerdata SET war_start = NULL;
