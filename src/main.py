@@ -227,15 +227,15 @@ def main():
                                     key=lambda x: x["ConflictProgress"],
                                     reverse=True,
                                 )
-                                if len(conflict_progress) > 0:
+                                if len(conflict_progress) > 0 and conflict_progress[0]['ConflictProgress'] > 0.2:
                                     shortcode = power_full_to_short(
                                         conflict_progress[0]["Power"]
                                     )
-                                if len(conflict_progress) > 1:
-                                    power_opposition = power_full_to_short(
-                                        conflict_progress[1]["Power"]
-                                    )
-                                    power_conflict = True
+                                    if len(conflict_progress) > 1 and conflict_progress[1]['ConflictProgress'] > 0.2:
+                                        power_opposition = power_full_to_short(
+                                            conflict_progress[1]["Power"]
+                                        )
+                                        power_conflict = True
 
                             # location
                             latitude = starPos[1]
