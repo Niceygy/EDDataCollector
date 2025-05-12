@@ -237,6 +237,12 @@ def main():
                                     case _:
                                         shortcode = ""
 
+                            power_conflict = False
+                            if 'PowerplayConflictProgress' in __json['message']:
+                                power_conflict = True
+                                
+                                
+                            # location
                             latitude = starPos[1]
                             longitude = starPos[0]
                             height = starPos[2]
@@ -248,16 +254,6 @@ def main():
                             else:
                                 isAnarchy = False
 
-                            controlPoints = 0
-                            if "PowerplayConflictProgress" in __json["message"]:
-                                # system in confict, assign to the winning power as of now
-                                controlPoints = __json["message"][
-                                    "PowerplayConflictProgress"
-                                ][0]["ConflictProgress"]
-                            elif "PowerplayStateControlProgress" in __json["message"]:
-                                controlPoints = __json["message"][
-                                    "PowerplayStateControlProgress"
-                                ]
 
                             update_system(
                                 session,
@@ -270,7 +266,7 @@ def main():
                                 # powerplay
                                 shortcode,
                                 state,
-                                float(controlPoints),
+                                power_conflict
                             )
                     session.commit()
                     session.flush()

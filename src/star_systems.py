@@ -15,7 +15,7 @@ def update_system(
     # powerplay
     shortcode: str,
     state: str,
-    controlPoints: float,
+    power_conflict: bool,
 ):
 
     # Is in bubble?
@@ -53,4 +53,4 @@ def update_system(
             else:
                 # already in db, update
                 system.is_anarchy = is_anarchy
-        update_power_data(system_name, shortcode, state, controlPoints, session)
+        update_power_data(system_name, shortcode, state, power_conflict, session)

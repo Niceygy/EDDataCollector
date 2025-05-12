@@ -1,5 +1,5 @@
 import sqlalchemy
-from sqlalchemy import String, Column, Boolean, Integer, Float
+from sqlalchemy import String, Column, Boolean, Integer, Float, BOOLEAN
 
 Base = sqlalchemy.orm.declarative_base()
 
@@ -53,42 +53,22 @@ def get_week_of_cycle():
         f.close()
     return int(data)
 
-
+POWERS = {
+    "ALD": "Arissa Lavingy-Duval",
+    "ARD": "Archon Delane",
+    "ASD": "Aisling Duval",
+    "DPT": "Denton Patrus",
+    "EMH": "Edmund Mahon",
+    "FLW": "Felicia Winters",
+    "JRA": "Jerome Archer",
+    "LYR": "Li Yong-Rui",
+    "NAK": "Nakato Kaine",
+    "PRA": "Prantav Antal",
+    "YRG": "Yuri Grom",
+    "ZMT": "Zemina Torval",
+}
 """
-TABLES:
-
-star_systems:
-
-    system_name text
-    latitude float
-    longitude float
-    height float
-    state text (powerplay state)
-    shortcode text (power shortcode)
-    is_anarchy bool
-    has_res_sites bool
-
-stations:
-
-    name text
-    system text
-    type text (Starport, Outpost, PlanetaryPort, Settlement, EngineerBase)
-
-megaships: 
-    name text pri key
-    system1 text
-    system2 text
-    system3 text
-    system4 text
-    system5 text
-    system6 text
-
-powerdata:
-    system_name text pri key
-    state text
-    shortcode text
-    controlPointsStart float
-    controlPointsLatest float
+The powers and their shortcodes
 """
 
 
@@ -130,5 +110,15 @@ class PowerData(Base):
     system_name = Column(String(50), primary_key=True)
     state = Column(String(20))
     shortcode = Column(String(4))
-    # controlPointsStart = Column(Float())
-    # controlPointsLatest = Column(Float())
+    war = Column(BOOLEAN(False))
+    war_start = Column(Integer())
+
+
+class PowerPoints(Base):
+    __tablename__ = "powerpoints"
+    id = Column(Integer, primary_key=True)
+    shortcode = Column(String, nullable=False)
+    exploited = Column(Integer, nullable=False)
+    fortified = Column(Integer, nullable=False)
+    stronghold = Column(Integer, nullable=False)
+    cycle = Column(Integer, nullable=False)

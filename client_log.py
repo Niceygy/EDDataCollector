@@ -37,8 +37,11 @@ def main():
                 __json      = simplejson.loads(__message)
                 
                 # call dumps() to ensure double quotes in output
-                open("client_log.jsonl", "a").write(f"\n{simplejson.dumps(__json)}")
-                
+                try:
+                    if "FSDJump" in __json['message']['event']:
+                        open("client_log.jsonl", "a").write(f"\n{simplejson.dumps(__json)}")
+                except Exception:
+                    i = 1
         except zmq.ZMQError as e:
             print ('ZMQSocketException: ' + str(e))
             sys.stdout.flush()

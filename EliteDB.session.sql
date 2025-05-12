@@ -1,2 +1,7 @@
-SELECT * FROM powerdata WHERE system_name LIKE "%LP 911-13%";
-SELECT * FROM star_systems WHERE system_name LIKE "%LP 911-13%";
+CREATE TABLE IF NOT EXISTS powerpoints (
+    id INT PRIMARY KEY,
+    shortcode VARCHAR(4),
+    exploited INT,
+    fortified INT,
+    stronghold INT
+)
