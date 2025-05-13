@@ -17,7 +17,7 @@ import math
 from megaships import add_megaship
 from powers import update_power_data
 from star_systems import update_system
-from stations import add_station, alter_station_data
+# from stations import add_station, alter_station_data
 from constants import (
     DATABASE_URI,
     EDDN_TIMEOUT,
@@ -30,6 +30,9 @@ from constants import (
     MESSAGE_TIMEOUT,
 )
 
+"""
+Database Connection
+"""
 Base = sqlalchemy.orm.declarative_base()
 
 
@@ -41,6 +44,10 @@ except Exception as e:
     print(e)
     os.exit()
 
+"""
+DateTime Logging
+"""
+
 powerplay_startdate = datetime.datetime(2024, 10, 31, 8)
 now = datetime.datetime.now()
 cycle = (now - powerplay_startdate).days / 7
@@ -50,6 +57,14 @@ print(f"[2/4] Megaship week {get_week_of_cycle()}/6. PowerPlay Cycle {cycle}.")
 
 
 def is_message_valid(message: dict) -> bool:
+    """Checks if the message has a valid gameversion & timestamp
+
+    Args:
+        message (dict): The message from EDDN to be checked
+
+    Returns:
+        bool: True if Valid, False if not
+    """
     try:
         if "event" not in message["message"]:
             return False
@@ -114,96 +129,24 @@ def main():
 
                 if is_message_valid(__json):
                     match __json["message"]["event"]:
-                        case "Docked":
-                            economy = None
-                            try:
-                                economy = str(
-                                    __json["message"]["StationEconomies"][0]["Name"]
-                                )
-                            except Exception:
-                                economy = "$economy_None;"
-                            economy = economy.replace("$economy_", "")
-                            economy = economy.removesuffix(";")
-
-                            system_name = str(__json["message"]["StarSystem"])
-                            station_name = str(__json["message"]["StationName"])
-                            station_type = str(__json["message"]["StationType"])
-                            if should_be_ignored(station_name) or should_be_ignored(
-                                economy
-                            ):
-                                continue
-                            else:
-                                alter_station_data(
-                                    station_name,
-                                    system_name,
-                                    economy,
-                                    station_type,
-                                    session,
-                                )
-
                         case "FSSSignalDiscovered":
+                            """
+                            Signals - Stations & Megaships
+                            """
                             for signal in __json["message"]["signals"]:
                                 if "SignalType" in signal:
-                                    if signal["SignalType"] == "ResourceExtraction":
-                                        systemName = str(
-                                            __json["message"]["StarSystem"]
-                                        )
-                                    elif signal["SignalType"] == "Megaship":
+                                    # Megaships
+                                    if signal["SignalType"] == "Megaship":
                                         megaship_name = str(signal["SignalName"])
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
                                         add_megaship(megaship_name, systemName, session)
-                                    elif signal["SignalType"] == "StationCoriolis":
-                                        station_name = str(signal["SignalName"])
-                                        systemName = str(
-                                            __json["message"]["StarSystem"]
-                                        )
-                                        add_station(
-                                            session,
-                                            station_name,
-                                            "Coriolis",
-                                            systemName,
-                                            "",
-                                        )
-                                    elif signal["SignalType"] == "Outpost":
-                                        station_name = str(signal["SignalName"])
-                                        systemName = str(
-                                            __json["message"]["StarSystem"]
-                                        )
-                                        add_station(
-                                            session,
-                                            station_name,
-                                            "Outpost",
-                                            systemName,
-                                            "",
-                                        )
-                                    elif signal["SignalType"] == "StationONeilOrbis":
-                                        station_name = str(signal["SignalName"])
-                                        systemName = str(
-                                            __json["message"]["StarSystem"]
-                                        )
-                                        add_station(
-                                            session,
-                                            station_name,
-                                            "Orbis",
-                                            systemName,
-                                            "",
-                                        )
-                                    elif signal["SignalType"] == "Ocellus":
-                                        station_name = str(signal["SignalName"])
-                                        systemName = str(
-                                            __json["message"]["StarSystem"]
-                                        )
-                                        add_station(
-                                            session,
-                                            station_name,
-                                            "Ocellus",
-                                            systemName,
-                                            "",
-                                        )
-
+                                    
                         case "FSDJump":
+                            """
+                            Star system data - location, powers, ect
+                            """
                             starPos = __json["message"]["StarPos"]
                             shortcode = ""
                             state = ""
@@ -222,6 +165,7 @@ def main():
                             except Exception:
                                 None
 
+                            # Power Parser - is it in conflict?
                             power_conflict = False
                             power_opposition = ""
                             if "PowerplayConflictProgress" in __json["message"]:
@@ -234,7 +178,7 @@ def main():
                                     shortcode = power_full_to_short(
                                         conflict_progress[0]["Power"]
                                     )
-                                    if len(conflict_progress) > 1: #and conflict_progress[1]['ConflictProgress'] > 0.2:
+                                    if len(conflict_progress) > 1 and conflict_progress[1]['ConflictProgress'] > 0.1:
                                         power_opposition = power_full_to_short(
                                             conflict_progress[1]["Power"]
                                         )

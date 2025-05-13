@@ -1,8 +1,6 @@
 from constants import BUBBLE_LIMIT_HIGH, BUBBLE_LIMIT_LOW, StarSystem
 from sqlalchemy.orm import sessionmaker as sm
 
-from powers import update_power_data
-
 
 def update_system(
     session: sm,

@@ -10,13 +10,15 @@ Base = sqlalchemy.orm.declarative_base()
 # EDDN
 EDDN_URI = "tcp://eddn.edcd.io:9500"
 EDDN_TIMEOUT = 600000
+"""How long to wait before reconnecting"""
 VALID_CLIENT_VERSION = ["4", "1", "1", "0"]
+""" Minimum client version to not be ignored """
 MESSAGE_TIMEOUT = 5
 """How many minutes until a message is considered old?"""
 
 # Bubble Limits
-BUBBLE_LIMIT_LOW = -500
-BUBBLE_LIMIT_HIGH = 500
+BUBBLE_LIMIT_LOW = -600
+BUBBLE_LIMIT_HIGH = 600
 
 # Database
 DATABASE_HOST = "10.0.0.52"
@@ -97,17 +99,17 @@ class StarSystem(Base):
     is_anarchy = Column(Boolean)
 
 
-class Station(Base):
-    """
-    Represents a entry in the stations table
-    """
+# class Station(Base):
+#     """
+#     Represents a entry in the stations table
+#     """
 
-    __tablename__ = "stations"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    station_name = Column(String(255))
-    star_system = Column(String(255))
-    station_type = Column(String(255))
-    economy = Column(String(255))
+#     __tablename__ = "stations"
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     station_name = Column(String(255))
+#     star_system = Column(String(255))
+#     station_type = Column(String(255))
+#     economy = Column(String(255))
 
 
 class Megaship(Base):
