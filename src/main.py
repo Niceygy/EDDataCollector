@@ -144,6 +144,7 @@ def main():
                                         add_megaship(megaship_name, systemName, session)
                                     
                         case "FSDJump":
+                            # print("FSDJump")
                             """
                             Star system data - location, powers, ect
                             """
@@ -226,7 +227,7 @@ def main():
         print("Error: " + str(e))
         sys.stdout.flush()
         session.close()
-        time.sleep(5)
+        subscriber.disconnect(EDDN_URI)
         return
 
 
