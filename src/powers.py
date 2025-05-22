@@ -1,5 +1,6 @@
 from datetime import datetime
 import math
+from typing import Tuple
 from sqlalchemy import and_
 from sqlalchemy.orm import sessionmaker as sm
 from constants import PowerData, power_full_to_short
@@ -57,9 +58,21 @@ class PowerUpdate:
             if len(powerConflictProgresses) > 1 and powerConflictProgresses[1]['progress'] > 0.1:
                     power_opposition = powerConflictProgresses[1]["shortcode"]
                     power_conflict = True
+                    
+        if shortcode == power_opposition and power_conflict == True:
+            power_conflict = False
         return shortcode, power_conflict, power_opposition
 
-    def parse(self, __json: dict):
+
+    def parse(self, __json: dict) -> Tuple[str, str, str]:
+        """Returns the basic system info
+
+        Args:
+            __json (dict): message from eddn
+
+        Returns:
+            system_name (str), shortcode (str), state (str)
+        """
         system_name = __json['message']['StarSystem']
         shortcode = ""
         state = ""
@@ -82,11 +95,15 @@ class PowerUpdate:
         self,
         __json: dict,
         session: sm,
-    ):
+    ) -> None:
+        """Updates the power data for the system
+
+        Args:
+            __json (dict): message from eddn
+            session (sm): database session
+        """
         system_name, shortcode, state = self.parse(__json)
         system_name = str(system_name).replace("'", ".")
-        if system_name == "Worom Pef":
-            print()
         if state == "":
             # we only want powerplay systems!
             return
