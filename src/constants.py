@@ -74,16 +74,16 @@ def get_week_of_cycle():
     return int(data)
 
 POWERS = {
-    "ALD": "Arissa Lavingy-Duval",
-    "ARD": "Archon Delane",
+    "ALD": 'A. Lavigny-Duval',
+    "ARD": 'Archon Delaine',
     "ASD": "Aisling Duval",
-    "DPT": "Denton Patrus",
+    "DPT": 'Denton Patreus',
     "EMH": "Edmund Mahon",
     "FLW": "Felicia Winters",
     "JRA": "Jerome Archer",
     "LYR": "Li Yong-Rui",
     "NAK": "Nakato Kaine",
-    "PRA": "Prantav Antal",
+    "PRA": 'Pranav Antal',
     "YRG": "Yuri Grom",
     "ZMT": "Zemina Torval",
 }

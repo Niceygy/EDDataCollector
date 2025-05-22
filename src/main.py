@@ -15,7 +15,7 @@ import math
 # Local
 
 from megaships import add_megaship
-from powers import update_power_data
+from powers import PowerUpdate
 from star_systems import update_system
 # from stations import add_station, alter_station_data
 from constants import (
@@ -67,6 +67,8 @@ def is_message_valid(message: dict) -> bool:
     """
     try:
         if "event" not in message["message"]:
+            return False
+        if should_be_ignored(message):
             return False
         # client version
         client_version = message["header"]["gameversion"]
@@ -149,42 +151,6 @@ def main():
                             Star system data - location, powers, ect
                             """
                             starPos = __json["message"]["StarPos"]
-                            shortcode = ""
-                            state = ""
-                            if "PowerplayState" in __json["message"]:
-                                state = __json["message"]["PowerplayState"]
-                                if (
-                                    "ControllingPower" in __json["message"]
-                                    and state != "Unoccupied"
-                                ):
-                                    power = __json["message"]["ControllingPower"]
-                                elif "Powers" in __json["message"]:
-                                    power = __json["message"]["Powers"][0]
-
-                            try:
-                                shortcode = power_full_to_short(power)
-                            except Exception:
-                                None
-
-                            # Power Parser - is it in conflict?
-                            power_conflict = False
-                            power_opposition = ""
-                            if "PowerplayConflictProgress" in __json["message"]:
-                                conflict_progress = sorted(
-                                    __json["message"]["PowerplayConflictProgress"],
-                                    key=lambda x: x["ConflictProgress"],
-                                    reverse=True,
-                                )
-                                if len(conflict_progress) > 0 and conflict_progress[0]['ConflictProgress'] > 0.2:
-                                    shortcode = power_full_to_short(
-                                        conflict_progress[0]["Power"]
-                                    )
-                                    if len(conflict_progress) > 1 and conflict_progress[1]['ConflictProgress'] > 0.1:
-                                        power_opposition = power_full_to_short(
-                                            conflict_progress[1]["Power"]
-                                        )
-                                        power_conflict = True
-
                             # location
                             latitude = starPos[1]
                             longitude = starPos[0]
@@ -206,14 +172,7 @@ def main():
                                 height,
                                 isAnarchy,
                             )
-                            update_power_data(
-                                system_name=system_name,
-                                shortcode=shortcode,
-                                state=state,
-                                power_conflict=power_conflict,
-                                conflict_opposing=power_opposition,
-                                session=session,
-                            )
+                            PowerUpdate(__json, session)
                     session.commit()
                     session.flush()
 

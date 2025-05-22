@@ -1,1 +1,1 @@
-DROP TABLE stations;
+SELECT * FROM powerdata WHERE shortcode IS NULL;
