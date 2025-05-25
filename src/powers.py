@@ -28,12 +28,15 @@ class PowerUpdate:
         if "PowerplayConflictProgress" in __json["message"]:
             powerConflictProgresses = []
             for item in __json["message"]["PowerplayConflictProgress"]:
-                powerConflictProgresses.append(
-                    {
-                        "progress": float(item["ConflictProgress"]),
-                        "shortcode": power_full_to_short(item["Power"]),
-                    }
-                )
+                if float(item['ConflictProgress']) < 0.001:
+                    None
+                else:
+                    powerConflictProgresses.append(
+                        {
+                            "progress": float(item["ConflictProgress"]),
+                            "shortcode": power_full_to_short(item["Power"]),
+                        }
+                    )
                 # e.g [0.115, "ALD"]
 
             isSorted = False

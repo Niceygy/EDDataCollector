@@ -1,6 +1,9 @@
 print("[0/4] Loading Imports, Please Stand By")
 
 # Packages
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import ssl
 import zlib
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
@@ -11,7 +14,9 @@ import time
 import datetime
 import os
 import math
-
+import smtplib
+import imaplib
+import email
 # Local
 
 from megaships import add_megaship
@@ -82,6 +87,9 @@ def is_message_valid(message: dict) -> bool:
                     good = False
             except Exception:
                 good = False
+                
+        if good and client_version != VALID_CLIENT_VERSION:
+            print(f"New client! {client_version}")
         if good:
             # message age
             message_timestamp = datetime.datetime.strptime(
