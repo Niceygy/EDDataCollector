@@ -50,12 +50,12 @@ class PowerUpdate:
                         isSorted = True
                         continue
                                 
-            if len(powerConflictProgresses) > 0 and powerConflictProgresses[0]['progress'] > 0.2:
+            if len(powerConflictProgresses) > 0 and powerConflictProgresses[0]['progress'] > 0.3:
                     shortcode = powerConflictProgresses[0]["shortcode"]
                     if shortcode == '':
                         None
                 
-            if len(powerConflictProgresses) > 1 and powerConflictProgresses[1]['progress'] > 0.1:
+            if len(powerConflictProgresses) > 1 and powerConflictProgresses[1]['progress'] > 0.3:
                     power_opposition = powerConflictProgresses[1]["shortcode"]
                     power_conflict = True
                     
