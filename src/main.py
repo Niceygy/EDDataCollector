@@ -88,8 +88,8 @@ def is_message_valid(message: dict) -> bool:
             except Exception:
                 good = False
                 
-        if good and client_version != VALID_CLIENT_VERSION:
-            print(f"New client! {client_version}")
+        # if good and client_version != VALID_CLIENT_VERSION:
+        #     print(f"New client! {client_version}")
         if good:
             # message age
             message_timestamp = datetime.datetime.strptime(
@@ -152,6 +152,11 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_megaship(megaship_name, systemName, session)
+                                    elif str(signal['SignalType']).__contains__("$Warzone_Powerplay_"):
+                                        systemName = str(
+                                            __json["message"]["StarSystem"]
+                                        )
+                                        PowerUpdate.add_czs(system_name, session)
                                     
                         case "FSDJump":
                             # print("FSDJump")

@@ -10,6 +10,24 @@ class PowerUpdate:
     def __init__(self, __json: dict, session: sm):
         self.update_power_data(__json, session)
         return
+    
+    def add_czs(self, system_name, session: sm):
+        system_name = str(system_name).replace("'", ".")
+        if system_name == "": return
+
+        entry = (
+            session.query(PowerData)
+            .filter(and_(PowerData.system_name == system_name))
+            .first()
+        )
+        
+        if entry is None:
+            return
+        #other funcs will deal with this
+        else:
+            if not entry.conflict_zones:
+                entry.conflict_zones = True
+            session.commit() 
 
     def is_in_war(self, __json: dict):
         """Checks if a system is in the contested state

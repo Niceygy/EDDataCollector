@@ -12,7 +12,7 @@ EDDN_URI = "tcp://eddn.edcd.io:9500"
 """EDDN TCP URI"""
 EDDN_TIMEOUT = 600000
 """How long to wait before reconnecting"""
-VALID_CLIENT_VERSION = ["4", "1", "2", "100"]
+VALID_CLIENT_VERSION = ["4", "1", "2", "200"]
 """ Minimum client version to not be ignored """
 MESSAGE_TIMEOUT = 5
 """How many minutes until a message is considered old?"""
@@ -133,3 +133,4 @@ class PowerData(Base):
     war = Column(BOOLEAN(False))
     war_start = Column(Integer())
     opposition = Column(String(4))
+    conflict_zones = Column(BOOLEAN(False))
