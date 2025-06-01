@@ -22,14 +22,12 @@ import email
 from megaships import add_megaship
 from powers import PowerUpdate
 from star_systems import update_system
-# from stations import add_station, alter_station_data
 from constants import (
     DATABASE_URI,
     EDDN_TIMEOUT,
     EDDN_URI,
     get_week_of_cycle,
     DATABASE_HOST,
-    power_full_to_short,
     should_be_ignored,
     VALID_CLIENT_VERSION,
     MESSAGE_TIMEOUT,
@@ -188,7 +186,8 @@ def main():
                             PowerUpdate(__json, session)
                     session.commit()
                     session.flush()
-
+                else:
+                    i = 0
             except zmq.ZMQError as e:
                 print("ZMQSocketException: " + str(e))
                 sys.stdout.flush()

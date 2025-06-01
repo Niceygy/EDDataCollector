@@ -12,7 +12,7 @@ EDDN_URI = "tcp://eddn.edcd.io:9500"
 """EDDN TCP URI"""
 EDDN_TIMEOUT = 600000
 """How long to wait before reconnecting"""
-VALID_CLIENT_VERSION = ["4", "1", "2", "200"]
+VALID_CLIENT_VERSION = ["4", "1", "2", "100"]
 """ Minimum client version to not be ignored """
 MESSAGE_TIMEOUT = 5
 """How many minutes until a message is considered old?"""
@@ -40,6 +40,7 @@ IGNORE_THESE = [
     "$EXT_PANEL_ColonisationShip:#index=1;",
     "$EXT_PANEL_ColonisationShip:#index=2;",
     "$EXT_PANEL_ColonisationShip:#index=3;",
+    "GameGlass"
 ]
 """If a name contains one of these, ignore it"""
 
