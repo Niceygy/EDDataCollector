@@ -1,9 +1,9 @@
 dnspython==2.7.0
-greenlet==3.1.1
+greenlet==3.2.2
 PyMySQL==1.1.1
 pyping==0.0.6
-pyzmq==26.2.1
-simplejson==3.19.3
-SQLAlchemy==2.0.39
-typing_extensions==4.12.2
+pyzmq==26.4.0
+simplejson==3.20.1
+SQLAlchemy==2.0.41
+typing_extensions==4.14.0
 zmq==0.0.0
