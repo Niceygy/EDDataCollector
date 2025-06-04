@@ -1,1 +1,1 @@
-SELECT * FROM powerdata WHERE shortcode IS NULL;
+DELETE FROM conflicts WHERE first_place = "" OR second_place = "";

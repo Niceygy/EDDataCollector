@@ -130,8 +130,14 @@ class PowerData(Base):
     __tablename__ = "powerdata"
     system_name = Column(String(50), primary_key=True)
     state = Column(String(20))
+    """Unoccupied, War, Exploited, Fortified or Stronghold"""
     shortcode = Column(String(4))
-    war = Column(BOOLEAN(False))
-    war_start = Column(Integer())
-    opposition = Column(String(4))
-    conflict_zones = Column(BOOLEAN(False))
+
+    
+class Conflicts(Base):
+    __tablename__ = "conflicts"
+    system_name = Column(String(50), primary_key=True)
+    first_place = Column(String(4))
+    second_place = Column(String(4))
+    has_czs = Column(BOOLEAN(False))
+    cycle = Column(Integer())

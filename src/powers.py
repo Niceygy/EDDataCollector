@@ -3,31 +3,32 @@ import math
 from typing import Tuple
 from sqlalchemy import and_
 from sqlalchemy.orm import sessionmaker as sm
-from constants import PowerData, power_full_to_short
+from constants import PowerData, power_full_to_short, Conflicts
 
 
 class PowerUpdate:
     def __init__(self, __json: dict, session: sm):
         self.update_power_data(__json, session)
         return
-    
+
     def add_czs(self, system_name, session: sm):
         system_name = str(system_name).replace("'", ".")
-        if system_name == "": return
+        if system_name == "":
+            return
 
         entry = (
-            session.query(PowerData)
-            .filter(and_(PowerData.system_name == system_name))
+            session.query(Conflicts)
+            .filter(and_(Conflicts.system_name == system_name))
             .first()
         )
-        
+
         if entry is None:
             return
-        #other funcs will deal with this
+        # other funcs will deal with this
         else:
-            if not entry.conflict_zones:
-                entry.conflict_zones = True
-            session.commit() 
+            if not entry.has_czs:
+                entry.has_czs = True
+            session.commit()
 
     def is_in_war(self, __json: dict):
         """Checks if a system is in the contested state
@@ -46,7 +47,7 @@ class PowerUpdate:
         if "PowerplayConflictProgress" in __json["message"]:
             powerConflictProgresses = []
             for item in __json["message"]["PowerplayConflictProgress"]:
-                if float(item['ConflictProgress']) < 0.001:
+                if float(item["ConflictProgress"]) < 0.001:
                     None
                 else:
                     powerConflictProgresses.append(
@@ -61,29 +62,37 @@ class PowerUpdate:
             while not isSorted:
                 isSorted = True
                 for i in range(len(powerConflictProgresses) - 1):
-                    if powerConflictProgresses[i]['progress'] < powerConflictProgresses[i+1]['progress']:
+                    if (
+                        powerConflictProgresses[i]["progress"]
+                        < powerConflictProgresses[i + 1]["progress"]
+                    ):
                         _temp = powerConflictProgresses[i]
-                        powerConflictProgresses[i] = powerConflictProgresses[i+1]
-                        powerConflictProgresses[i+1] = _temp
+                        powerConflictProgresses[i] = powerConflictProgresses[i + 1]
+                        powerConflictProgresses[i + 1] = _temp
                         isSorted = False
                         continue
                     else:
                         isSorted = True
                         continue
-                                
-            if len(powerConflictProgresses) > 0 and powerConflictProgresses[0]['progress'] > 0.3:
-                    shortcode = powerConflictProgresses[0]["shortcode"]
-                    if shortcode == '':
-                        None
-                
-            if len(powerConflictProgresses) > 1 and powerConflictProgresses[1]['progress'] > 0.3:
-                    power_opposition = powerConflictProgresses[1]["shortcode"]
-                    power_conflict = True
-                    
+
+            if (
+                len(powerConflictProgresses) > 0
+                and powerConflictProgresses[0]["progress"] > 0.3
+            ):
+                shortcode = powerConflictProgresses[0]["shortcode"]
+                if shortcode == "":
+                    None
+
+            if (
+                len(powerConflictProgresses) > 1
+                and powerConflictProgresses[1]["progress"] > 0.3
+            ):
+                power_opposition = powerConflictProgresses[1]["shortcode"]
+                power_conflict = True
+
         if shortcode == power_opposition and power_conflict == True:
             power_conflict = False
         return shortcode, power_conflict, power_opposition
-
 
     def parse(self, __json: dict) -> Tuple[str, str, str]:
         """Returns the basic system info
@@ -94,15 +103,12 @@ class PowerUpdate:
         Returns:
             system_name (str), shortcode (str), state (str)
         """
-        system_name = __json['message']['StarSystem']
+        system_name = __json["message"]["StarSystem"]
         shortcode = ""
         state = ""
         if "PowerplayState" in __json["message"]:
             state = __json["message"]["PowerplayState"]
-            if (
-            "ControllingPower" in __json["message"]
-            and state != "Unoccupied"
-            ):
+            if "ControllingPower" in __json["message"] and state != "Unoccupied":
                 power = __json["message"]["ControllingPower"]
             elif "Powers" in __json["message"]:
                 power = __json["message"]["Powers"][0]
@@ -134,7 +140,7 @@ class PowerUpdate:
             .filter(and_(PowerData.system_name == system_name))
             .first()
         )
-        
+
         shortcode, is_in_conflict, conflict_opposition = self.is_in_war(__json)
 
         if entry is None:
@@ -142,11 +148,17 @@ class PowerUpdate:
                 session.add(
                     PowerData(
                         system_name=system_name,
-                        state=state,
+                        state="War",
                         shortcode=shortcode,
-                        war=True,
-                        war_start=self.powerplay_cycle(),
-                        opposition=conflict_opposition,
+                    )
+                )
+                session.add(
+                    Conflicts(
+                        system_name=system_name,
+                        first_place=shortcode,
+                        second_place=conflict_opposition,
+                        has_czs=False,
+                        cycle=self.powerplay_cycle(),
                     )
                 )
             else:
@@ -158,25 +170,84 @@ class PowerUpdate:
                     )
                 )
         else:
-            if (
-                entry.war_start is not None
-                and entry.war_start < (self.powerplay_cycle() - 2)
-                and entry.war
-            ):
-                entry.war = False
-                entry.war_start = None
-                entry.opposition = None
-            elif not entry.war and is_in_conflict:
-                # war not in db, but is in power_conflict
-                entry.war = is_in_conflict
-                entry.war_start = self.powerplay_cycle()
-                entry.opposition = conflict_opposition
-
-            if entry.state != state:
+            if entry.state == "War" and is_in_conflict:
+                self.update_war(
+                    system_name=system_name, first=shortcode, second=conflict_opposition
+                )
+            elif entry.state == "War" and not is_in_conflict:
+                self.remove_war(system_name, session)
+            elif entry.state != state:
                 entry.state = state
                 entry.shortcode = shortcode
 
             session.commit()
+        return
+
+    def update_war(
+        self, first: str, second: str, system_name: str, session: sm
+    ) -> None:
+        """Updates a currently active conflict
+
+        Args:
+            first (str): Winning power
+            second (str): Second place power
+            system_name (str): system name
+            session (sm): Database session
+        """
+        entry = (
+            session.query(Conflicts)
+            .filter(and_(Conflicts.system_name == system_name))
+            .first()
+        )
+
+        if entry is None:
+            session.add(
+                Conflicts(
+                    system_name=system_name,
+                    first_place=first,
+                    second_place=second,
+                    has_czs=False,
+                    cycle=self.powerplay_cycle(),
+                )
+            )
+        else:
+            entry.first_place = first
+            entry.second_place = second
+
+        session.commit()
+
+        return
+
+    def remove_war(system_name: str, session: sm) -> None:
+        """Removes a war from the conflicts table and
+        updates the corresponding record on the powerdata table
+
+        Args:
+            system_name (str): System Name
+            session (sm): Database Session
+        """
+        victor = (
+            session.query(Conflicts)
+            .filter(and_(Conflicts.system_name == system_name))
+            .first()
+        ).first_place
+
+        powerdata_entry = (
+            session.query(Conflicts)
+            .filter(and_(Conflicts.system_name == system_name))
+            .first()
+        )
+        if powerdata_entry is None:
+            session.add(
+                PowerData(system_name=system_name, state="Exploited", shortcode=victor)
+            )
+        else:
+            powerdata_entry.state = "Exploited"
+            powerdata_entry.shortcode = victor
+
+        Conflicts.query.filter_by(system_name=system_name).delete()
+
+        session.commit()
         return
 
     def powerplay_cycle(self) -> int:
