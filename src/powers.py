@@ -172,7 +172,7 @@ class PowerUpdate:
         else:
             if entry.state == "War" and is_in_conflict:
                 self.update_war(
-                    system_name=system_name, first=shortcode, second=conflict_opposition
+                    system_name=system_name, first=shortcode, second=conflict_opposition, session=session
                 )
             elif entry.state == "War" and not is_in_conflict:
                 self.remove_war(system_name, session)
@@ -218,7 +218,7 @@ class PowerUpdate:
 
         return
 
-    def remove_war(system_name: str, session: sm) -> None:
+    def remove_war(self, system_name: str, session: sm) -> None:
         """Removes a war from the conflicts table and
         updates the corresponding record on the powerdata table
 
@@ -230,7 +230,12 @@ class PowerUpdate:
             session.query(Conflicts)
             .filter(and_(Conflicts.system_name == system_name))
             .first()
-        ).first_place
+        )
+        
+        if victor is None:
+            return
+        else:
+            victor = victor.first_place
 
         powerdata_entry = (
             session.query(Conflicts)

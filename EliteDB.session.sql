@@ -1,1 +1,0 @@
-DELETE FROM conflicts WHERE first_place = "" OR second_place = "";

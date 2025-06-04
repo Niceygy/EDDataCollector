@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python Debugger: EDDataCollector",
+      "name": "EDDataCollector",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/src/main.py",
