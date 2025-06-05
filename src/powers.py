@@ -117,6 +117,28 @@ class PowerUpdate:
             except Exception:
                 None
         return system_name, shortcode, state
+    
+    def corrected_control_pts(self, state: str, progress: float) -> float:
+        """Corrects the control points for use in the db
+
+        Args:
+            state (str): system state
+            progress (float): progress from journal
+
+        Returns:
+            float: Corrected control pts
+        """
+        if progress > 4000:
+            if state == "Exploited":
+                scale = 349999
+            elif state == "Fortified":
+                scale = 650000
+            elif state == "Stronghold":
+                scale = 1000000
+            else: # must be "Unoccupied", never reached
+                scale = 120000
+            progress -= 4294967296 / scale
+        return progress
 
     def update_power_data(
         self,
@@ -131,6 +153,7 @@ class PowerUpdate:
         """
         system_name, shortcode, state = self.parse(__json)
         system_name = str(system_name).replace("'", ".")
+        journal_control_pts = __json['message']['PowerplayStateControlProgress'] if 'PowerplayStateControlProgress' in __json else 0
         if state == "":
             # we only want powerplay systems!
             return
@@ -150,6 +173,8 @@ class PowerUpdate:
                         system_name=system_name,
                         state="War",
                         shortcode=shortcode,
+                        control_points=self.corrected_control_pts(state, journal_control_pts),
+                        points_change=0
                     )
                 )
                 session.add(
@@ -167,6 +192,8 @@ class PowerUpdate:
                         system_name=system_name,
                         state=state,
                         shortcode=shortcode,
+                        control_points=self.corrected_control_pts(state, journal_control_pts),
+                        points_change=0
                     )
                 )
         else:
@@ -179,6 +206,9 @@ class PowerUpdate:
             elif entry.state != state:
                 entry.state = state
                 entry.shortcode = shortcode
+            if 'PowerplayStateControlProgress' in __json['message']:
+                points_change = math.abs(entry.control_points - self.corrected_control_pts(state, journal_control_pts))
+                entry.points_change = points_change
 
             session.commit()
         return

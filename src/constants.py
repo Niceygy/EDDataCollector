@@ -1,5 +1,5 @@
 import sqlalchemy
-from sqlalchemy import String, Column, Boolean, Integer, Float, BOOLEAN
+from sqlalchemy import BigInteger, String, Column, Boolean, Integer, Float, BOOLEAN
 
 Base = sqlalchemy.orm.declarative_base()
 
@@ -132,7 +132,8 @@ class PowerData(Base):
     state = Column(String(20))
     """Unoccupied, War, Exploited, Fortified or Stronghold"""
     shortcode = Column(String(4))
-
+    control_points = Column(Float())
+    points_change = Column(Float())
     
 class Conflicts(Base):
     __tablename__ = "conflicts"
