@@ -1,7 +1,7 @@
 from datetime import datetime
 import math
 from typing import Tuple
-from sqlalchemy import and_
+from sqlalchemy import and_, delete
 from sqlalchemy.orm import sessionmaker as sm
 from constants import PowerData, power_full_to_short, Conflicts
 
@@ -44,6 +44,7 @@ class PowerUpdate:
         power_conflict = False
         power_opposition = ""
         shortcode = ""
+        
         if "PowerplayConflictProgress" in __json["message"]:
             powerConflictProgresses = []
             for item in __json["message"]["PowerplayConflictProgress"]:
@@ -153,7 +154,7 @@ class PowerUpdate:
         """
         system_name, shortcode, state = self.parse(__json)
         system_name = str(system_name).replace("'", ".")
-        journal_control_pts = __json['message']['PowerplayStateControlProgress'] if 'PowerplayStateControlProgress' in __json else 0
+        journal_control_pts = __json['message'].get('PowerplayStateControlProgress', 0)
         if state == "":
             # we only want powerplay systems!
             return
@@ -164,7 +165,11 @@ class PowerUpdate:
             .first()
         )
 
-        shortcode, is_in_conflict, conflict_opposition = self.is_in_war(__json)
+        is_in_conflict = False
+        conflict_opposition = ""
+        if 'PowerPlayState' in __json["message"] and __json['message']['PowerPlayState'] != "Unoccupied":
+            shortcode, is_in_conflict, conflict_opposition = self.is_in_war(__json)
+        
 
         if entry is None:
             if is_in_conflict:
@@ -206,9 +211,16 @@ class PowerUpdate:
             elif entry.state != state:
                 entry.state = state
                 entry.shortcode = shortcode
-            if 'PowerplayStateControlProgress' in __json['message']:
-                points_change = math.abs(entry.control_points - self.corrected_control_pts(state, journal_control_pts))
+            if 'PowerplayStateControlProgress' in __json['message']: #_PowerUpdate__json['message']['PowerplayStateControlProgress']
+                if entry.control_points is None: entry.control_points = self.corrected_control_pts(state, journal_control_pts)
+                points_change = abs(entry.control_points - self.corrected_control_pts(state, journal_control_pts))
                 entry.points_change = points_change
+                # print(f"Updated {system_name} to {entry.points_change} points change (state {entry.state})")
+                # print(f"    (corrected pts={self.corrected_control_pts(state, journal_control_pts)})")
+                # print(f"    (journal pts={journal_control_pts})")
+                # print(f"    ({__json['message']['PowerplayStateControlProgress']})")
+                # print(" ")
+
 
             session.commit()
         return
@@ -279,8 +291,8 @@ class PowerUpdate:
         else:
             powerdata_entry.state = "Exploited"
             powerdata_entry.shortcode = victor
-
-        Conflicts.query.filter_by(system_name=system_name).delete()
+            
+        delete(Conflicts).where(Conflicts.system_name == system_name)
 
         session.commit()
         return
