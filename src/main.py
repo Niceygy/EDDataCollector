@@ -1,9 +1,6 @@
 print("[0/4] Loading Imports, Please Stand By")
 
 # Packages
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-import ssl
 import zlib
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
@@ -14,9 +11,6 @@ import time
 import datetime
 import os
 import math
-import smtplib
-import imaplib
-import email
 # Local
 
 from megaships import add_megaship
@@ -141,6 +135,7 @@ def main():
                             """
                             Signals - Stations & Megaships
                             """
+                            i = 0
                             for signal in __json["message"]["signals"]:
                                 if "SignalType" in signal:
                                     # Megaships

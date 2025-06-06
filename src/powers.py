@@ -212,7 +212,7 @@ class PowerUpdate:
                 entry.state = state
                 entry.shortcode = shortcode
             if 'PowerplayStateControlProgress' in __json['message']: #_PowerUpdate__json['message']['PowerplayStateControlProgress']
-                if entry.control_points is None: entry.control_points = self.corrected_control_pts(state, journal_control_pts)
+                if entry.control_points is None or entry.control_points == 0: entry.control_points = self.corrected_control_pts(state, journal_control_pts)
                 points_change = abs(entry.control_points - self.corrected_control_pts(state, journal_control_pts))
                 entry.points_change = points_change
                 # print(f"Updated {system_name} to {entry.points_change} points change (state {entry.state})")
