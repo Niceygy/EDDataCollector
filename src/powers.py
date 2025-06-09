@@ -59,27 +59,31 @@ class PowerUpdate:
                     )
                 # e.g [0.115, "ALD"]
 
-            isSorted = False
-            while not isSorted:
-                isSorted = True
-                for i in range(len(powerConflictProgresses) - 1):
-                    if (
-                        powerConflictProgresses[i]["progress"]
-                        < powerConflictProgresses[i + 1]["progress"]
-                    ):
-                        _temp = powerConflictProgresses[i]
-                        powerConflictProgresses[i] = powerConflictProgresses[i + 1]
-                        powerConflictProgresses[i + 1] = _temp
-                        isSorted = False
-                        continue
-                    else:
-                        isSorted = True
-                        continue
+            powerConflictProgresses.sort(key=lambda x: x['progress'], reverse=True)
+            # while not isSorted:
+            #     isSorted = True
+            #     for i in range(len(powerConflictProgresses) - 1):
+            #         if (
+            #             powerConflictProgresses[i]["progress"]
+            #             < powerConflictProgresses[i + 1]["progress"]
+            #         ):
+            #             _temp = powerConflictProgresses[i]
+            #             powerConflictProgresses[i] = powerConflictProgresses[i + 1]
+            #             powerConflictProgresses[i + 1] = _temp
+            #             isSorted = False
+            #             continue
+            #         else:
+            #             isSorted = True
+            #             continue
+            
+            if powerConflictProgresses != []:
+                None
 
             if (
                 len(powerConflictProgresses) > 0
                 and powerConflictProgresses[0]["progress"] > 0.3
             ):
+                print(str(powerConflictProgresses))
                 shortcode = powerConflictProgresses[0]["shortcode"]
                 if shortcode == "":
                     None
@@ -90,7 +94,9 @@ class PowerUpdate:
             ):
                 power_opposition = powerConflictProgresses[1]["shortcode"]
                 power_conflict = True
-
+        else:
+            None
+        
         if shortcode == power_opposition and power_conflict == True:
             power_conflict = False
         return shortcode, power_conflict, power_opposition
@@ -167,7 +173,7 @@ class PowerUpdate:
 
         is_in_conflict = False
         conflict_opposition = ""
-        if 'PowerPlayState' in __json["message"] and __json['message']['PowerPlayState'] != "Unoccupied":
+        if 'PowerplayConflictProgress' in __json["message"]: #and __json['message']['PowerPlayState'] != "Unoccupied": _PowerUpdate__json['message']['PowerplayConflictProgress']
             shortcode, is_in_conflict, conflict_opposition = self.is_in_war(__json)
         
 
@@ -202,13 +208,13 @@ class PowerUpdate:
                     )
                 )
         else:
-            if entry.state == "War" and is_in_conflict:
+            if is_in_conflict:
                 self.update_war(
                     system_name=system_name, first=shortcode, second=conflict_opposition, session=session
                 )
             elif entry.state == "War" and not is_in_conflict:
                 self.remove_war(system_name, session)
-            elif entry.state != state:
+            if entry.state != state:
                 entry.state = state
                 entry.shortcode = shortcode
             if 'PowerplayStateControlProgress' in __json['message']: #_PowerUpdate__json['message']['PowerplayStateControlProgress']
@@ -255,6 +261,7 @@ class PowerUpdate:
         else:
             entry.first_place = first
             entry.second_place = second
+            entry.cycle=self.powerplay_cycle()
 
         session.commit()
 

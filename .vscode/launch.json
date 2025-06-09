@@ -8,6 +8,8 @@
       "name": "EDDataCollector",
       "type": "debugpy",
       "request": "launch",
+      "preLaunchTask": "stop-eddn-connector",
+      "postDebugTask": "start-eddn-connector",
       "program": "${workspaceFolder}/src/main.py",
       "console": "integratedTerminal"
     },

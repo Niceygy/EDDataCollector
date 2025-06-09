@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "stop-eddn-connector",
+      "type": "shell",
+      "command": "docker stop eddn_connector || true"
+    },
+    {
+      "label": "start-eddn-connector",
+      "type": "shell",
+      "command": "docker start eddn_connector || true"
+    }
+  ]
+}

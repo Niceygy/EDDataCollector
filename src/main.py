@@ -9,6 +9,7 @@ import simplejson
 import sys
 import time
 import datetime
+import traceback
 import os
 import math
 # Local
@@ -191,6 +192,7 @@ def main():
                 time.sleep(5)
     except Exception as e:
         print("Error: " + str(e))
+        print(traceback.format_exc())
         sys.stdout.flush()
         session.close()
         subscriber.disconnect(EDDN_URI)
