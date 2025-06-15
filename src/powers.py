@@ -40,7 +40,6 @@ class PowerUpdate:
             shortcode, power_conflict, power_opposition
              (winning power, is system in war?, power in second)
         """
-        # Power Parser - is it in conflict?
         power_conflict = False
         power_opposition = ""
         shortcode = ""
@@ -60,21 +59,6 @@ class PowerUpdate:
                 # e.g [0.115, "ALD"]
 
             powerConflictProgresses.sort(key=lambda x: x['progress'], reverse=True)
-            # while not isSorted:
-            #     isSorted = True
-            #     for i in range(len(powerConflictProgresses) - 1):
-            #         if (
-            #             powerConflictProgresses[i]["progress"]
-            #             < powerConflictProgresses[i + 1]["progress"]
-            #         ):
-            #             _temp = powerConflictProgresses[i]
-            #             powerConflictProgresses[i] = powerConflictProgresses[i + 1]
-            #             powerConflictProgresses[i + 1] = _temp
-            #             isSorted = False
-            #             continue
-            #         else:
-            #             isSorted = True
-            #             continue
             
             if powerConflictProgresses != []:
                 None
@@ -83,7 +67,6 @@ class PowerUpdate:
                 len(powerConflictProgresses) > 0
                 and powerConflictProgresses[0]["progress"] > 0.3
             ):
-                print(str(powerConflictProgresses))
                 shortcode = powerConflictProgresses[0]["shortcode"]
                 if shortcode == "":
                     None
@@ -173,7 +156,7 @@ class PowerUpdate:
 
         is_in_conflict = False
         conflict_opposition = ""
-        if 'PowerplayConflictProgress' in __json["message"]: #and __json['message']['PowerPlayState'] != "Unoccupied": _PowerUpdate__json['message']['PowerplayConflictProgress']
+        if 'PowerplayConflictProgress' in __json["message"]:
             shortcode, is_in_conflict, conflict_opposition = self.is_in_war(__json)
         
 
@@ -217,16 +200,10 @@ class PowerUpdate:
             if entry.state != state:
                 entry.state = state
                 entry.shortcode = shortcode
-            if 'PowerplayStateControlProgress' in __json['message']: #_PowerUpdate__json['message']['PowerplayStateControlProgress']
+            if 'PowerplayStateControlProgress' in __json['message']:
                 if entry.control_points is None or entry.control_points == 0: entry.control_points = self.corrected_control_pts(state, journal_control_pts)
                 points_change = abs(entry.control_points - self.corrected_control_pts(state, journal_control_pts))
                 entry.points_change = points_change
-                # print(f"Updated {system_name} to {entry.points_change} points change (state {entry.state})")
-                # print(f"    (corrected pts={self.corrected_control_pts(state, journal_control_pts)})")
-                # print(f"    (journal pts={journal_control_pts})")
-                # print(f"    ({__json['message']['PowerplayStateControlProgress']})")
-                # print(" ")
-
 
             session.commit()
         return

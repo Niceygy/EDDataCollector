@@ -1,6 +1,7 @@
 print("[0/4] Loading Imports, Please Stand By")
 
 # Packages
+import math
 import zlib
 import sqlalchemy
 from sqlalchemy.orm import sessionmaker
@@ -11,7 +12,7 @@ import time
 import datetime
 import traceback
 import os
-import math
+
 # Local
 
 from megaships import add_megaship
@@ -45,11 +46,12 @@ except Exception as e:
 """
 DateTime Logging
 """
-
 powerplay_startdate = datetime.datetime(2024, 10, 31, 8)
 now = datetime.datetime.now()
-cycle = (now - powerplay_startdate).days / 7
-cycle = math.trunc(cycle)
+
+cycle = math.trunc((now - powerplay_startdate).days / 7)
+
+
 
 print(f"[2/4] Megaship week {get_week_of_cycle()}/6. PowerPlay Cycle {cycle}.")
 
@@ -66,7 +68,7 @@ def is_message_valid(message: dict) -> bool:
     try:
         if "event" not in message["message"]:
             return False
-        if should_be_ignored(message):
+        elif should_be_ignored(message):
             return False
         # client version
         client_version = message["header"]["gameversion"]
@@ -80,9 +82,7 @@ def is_message_valid(message: dict) -> bool:
                     good = False
             except Exception:
                 good = False
-                
-        # if good and client_version != VALID_CLIENT_VERSION:
-        #     print(f"New client! {client_version}")
+
         if good:
             # message age
             message_timestamp = datetime.datetime.strptime(
@@ -120,15 +120,15 @@ def main():
 
         while True:
             try:
-                __message = subscriber.recv()
+                eddn_message = subscriber.recv()
 
-                if __message == False:
+                if eddn_message == False:
                     subscriber.disconnect(EDDN_URI)
                     print("Disconneted from EDDN. Suspected downtime?")
                     break
 
-                __message = zlib.decompress(__message)
-                __json = simplejson.loads(__message)
+                eddn_message = zlib.decompress(eddn_message)
+                __json = simplejson.loads(eddn_message)
 
                 if is_message_valid(__json):
                     match __json["message"]["event"]:
@@ -136,7 +136,6 @@ def main():
                             """
                             Signals - Stations & Megaships
                             """
-                            i = 0
                             for signal in __json["message"]["signals"]:
                                 if "SignalType" in signal:
                                     # Megaships
@@ -146,14 +145,16 @@ def main():
                                             __json["message"]["StarSystem"]
                                         )
                                         add_megaship(megaship_name, systemName, session)
-                                    elif str(signal['SignalType']).__contains__("$Warzone_Powerplay_"):
+                                    elif str(signal["SignalType"]).__contains__(
+                                        "$Warzone_Powerplay_"
+                                    ):
                                         systemName = str(
                                             __json["message"]["StarSystem"]
                                         )
+                                        print(f"PCZ: {systemName}")
                                         PowerUpdate.add_czs(system_name, session)
-                                    
+
                         case "FSDJump":
-                            # print("FSDJump")
                             """
                             Star system data - location, powers, ect
                             """
@@ -182,8 +183,6 @@ def main():
                             PowerUpdate(__json, session)
                     session.commit()
                     session.flush()
-                else:
-                    i = 0
             except zmq.ZMQError as e:
                 print("ZMQSocketException: " + str(e))
                 sys.stdout.flush()
@@ -198,5 +197,8 @@ def main():
         subscriber.disconnect(EDDN_URI)
         return
 
-
-main()
+if __name__ == "__main__":
+    main()
+    print(f"Closing script")
+else:
+    print(f"Script run as {__name__}. Please run as __main__")

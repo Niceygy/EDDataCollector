@@ -38,13 +38,12 @@ def update_system(
             )
             session.add(new_system)
         else:
-            if system is None or system.height is None:
+            if system.height is None:
                 # part filled in, finish the rest
                 system.height = height
-                system.latitude = (latitude,)
+                system.latitude = latitude
                 system.longitude = longitude
                 system.is_anarchy = is_anarchy
             else:
                 # already in db, update
                 system.is_anarchy = is_anarchy
-        # update_power_data(system_name, shortcode, state, power_conflict, session)
