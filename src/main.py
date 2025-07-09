@@ -110,6 +110,7 @@ def main():
     subscriber = context.socket(zmq.SUB)
     Session = sessionmaker(bind=engine, autoflush=True)
     session = Session()
+    session.execute(sqlalchemy.text("DELETE FROM conflicts WHERE cycle < :cycle_t2"), {"cycle_t2": (cycle-2)})
     subscriber.setsockopt(zmq.SUBSCRIBE, b"")
     subscriber.setsockopt(zmq.RCVTIMEO, EDDN_TIMEOUT)
     print(f"[3/4] EDDN Subscription Ready")
