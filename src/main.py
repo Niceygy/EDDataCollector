@@ -79,9 +79,9 @@ def is_message_valid(message: dict) -> bool:
                 if int(client_version[i]) >= int(VALID_CLIENT_VERSION[i]):
                     good = True
                 else:
-                    good = False
+                    return False
             except Exception:
-                good = False
+                return False
 
         if good:
             # message age

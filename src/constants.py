@@ -12,7 +12,7 @@ EDDN_URI = "tcp://eddn.edcd.io:9500"
 """EDDN TCP URI"""
 EDDN_TIMEOUT = 600000
 """How long to wait before reconnecting"""
-VALID_CLIENT_VERSION = ["4", "1", "2", "100"]
+VALID_CLIENT_VERSION = ["4", "1", "2", "0"]
 """ Minimum client version to not be ignored """
 MESSAGE_TIMEOUT = 5
 """How many minutes until a message is considered old?"""
@@ -100,6 +100,7 @@ class StarSystem(Base):
     longitude = Column(Float)
     height = Column(Float)
     is_anarchy = Column(Boolean)
+    frequency = Column(Integer)
 
 
 # class Station(Base):

@@ -35,6 +35,7 @@ def update_system(
                 longitude=longitude,
                 height=height,
                 is_anarchy=is_anarchy,
+                frequency=1
             )
             session.add(new_system)
         else:
@@ -47,3 +48,4 @@ def update_system(
             else:
                 # already in db, update
                 system.is_anarchy = is_anarchy
+            system.frequency = system.frequency + 1
