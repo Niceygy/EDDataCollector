@@ -18,6 +18,7 @@ import os
 from megaships import add_megaship
 from powers import PowerUpdate
 from star_systems import update_system
+from websocket import start_ws
 from constants import (
     DATABASE_URI,
     EDDN_TIMEOUT,
@@ -111,8 +112,10 @@ def main():
     Session = sessionmaker(bind=engine, autoflush=True)
     session = Session()
     session.execute(sqlalchemy.text("DELETE FROM conflicts WHERE cycle < :cycle_t2"), {"cycle_t2": (cycle-2)})
+    session.execute(sqlalchemy.text("UPDATE star_systems SET frequency = 1"))
     subscriber.setsockopt(zmq.SUBSCRIBE, b"")
     subscriber.setsockopt(zmq.RCVTIMEO, EDDN_TIMEOUT)
+    # websocket_queue = start_ws()
     print(f"[3/4] EDDN Subscription Ready")
 
     try:
@@ -132,6 +135,7 @@ def main():
                 __json = simplejson.loads(eddn_message)
 
                 if is_message_valid(__json):
+                    # websocket_queue._put(__json)
                     match __json["message"]["event"]:
                         case "FSSSignalDiscovered":
                             """

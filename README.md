@@ -15,3 +15,6 @@ Megaships table:
 
 Stations table: 
 `CREATE TABLE IF NOT EXISTS stations (id BIGINT PRIMARY KEY AUTO_INCREMENT, station_name VARCHAR(255), star_system VARCHAR(255), station_type VARCHAR(255));`
+
+EXPORT:
+SELECT * INTO OUTFILE 'megaships.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '' LINES TERMINATED BY 'NULL' FROM megaships; 
