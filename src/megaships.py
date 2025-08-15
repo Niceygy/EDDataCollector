@@ -22,22 +22,16 @@ def add_megaship(megaship_name: str, new_system: str, session: sm):
         if megaship is not None:
             # entry exists
             system_attribute = system_mapping.get(week)
-            if system_attribute is not None and getattr(megaship, system_attribute) is None:
-                # entry for this week does not exist, update it
-                match week:
-                    case 1:
-                        megaship.SYSTEM1 = new_system
-                    case 2:
-                        megaship.SYSTEM2 = new_system
-                    case 3:
-                        megaship.SYSTEM3 = new_system
-                    case 4:
-                        megaship.SYSTEM4 = new_system
-                    case 5:
-                        megaship.SYSTEM5 = new_system
-                    case 6:
-                        megaship.SYSTEM6 = new_system
-                session.add(megaship)
+            if system_attribute is not None:
+                current_system = getattr(megaship, system_attribute)
+                if current_system is None:
+                    # entry for this week does not exist, update it
+                    setattr(megaship, system_attribute, new_system)
+                    session.add(megaship)
+                elif current_system != new_system:
+                    # print(f"Updating {megaship_name} {system_attribute} from {current_system} to {new_system}")
+                    setattr(megaship, system_attribute, new_system)
+                    session.add(megaship)
         else:
             new_megaship = Megaship()
 

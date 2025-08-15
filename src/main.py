@@ -18,7 +18,6 @@ import os
 from megaships import add_megaship
 from powers import PowerUpdate
 from star_systems import update_system
-from websocket import start_ws
 from constants import (
     DATABASE_URI,
     EDDN_TIMEOUT,

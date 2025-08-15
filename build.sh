@@ -17,3 +17,5 @@ docker compose up -d
 cd /opt/stacks/elite_apps
 
 docker compose restart
+
+docker logs eddn_connector -f

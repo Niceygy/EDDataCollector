@@ -10,6 +10,12 @@
       "label": "start-eddn-connector",
       "type": "shell",
       "command": "docker start eddn_connector || true"
+    },
+    {
+      "label": "Deploy",
+      "type": "shell",
+      "command": "source ${cwd}/.venv/bin/activate && ${cwd}/build.sh",
+      "problemMatcher": []
     }
   ]
 }
