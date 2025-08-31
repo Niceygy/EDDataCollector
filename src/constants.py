@@ -12,7 +12,11 @@ EDDN_URI = "tcp://eddn.edcd.io:9500"
 """EDDN TCP URI"""
 EDDN_TIMEOUT = 600000
 """How long to wait before reconnecting"""
+<<<<<<< HEAD
 VALID_CLIENT_VERSION = 4
+=======
+VALID_CLIENT_VERSION = ["4", "2", "0", "0"]
+>>>>>>> 11c65d065efdf7e8e93a59d83306c85ff06b7c32
 """ Minimum client version to not be ignored """
 MESSAGE_TIMEOUT = 5
 """How many minutes until a message is considered old?"""
