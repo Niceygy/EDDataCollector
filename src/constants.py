@@ -12,7 +12,7 @@ EDDN_URI = "tcp://eddn.edcd.io:9500"
 """EDDN TCP URI"""
 EDDN_TIMEOUT = 600000
 """How long to wait before reconnecting"""
-VALID_CLIENT_VERSION = ["4", "1", "2", "0"]
+VALID_CLIENT_VERSION = 4
 """ Minimum client version to not be ignored """
 MESSAGE_TIMEOUT = 5
 """How many minutes until a message is considered old?"""
@@ -92,6 +92,12 @@ POWERS = {
 The powers and their shortcodes
 """
 
+VALID_SENDERS = [
+    "E:D Market Connector [Windows]",
+    "EDO Materials Helper",
+    "EDDiscovery",
+    "EDDLite"
+]
 
 class StarSystem(Base):
     __tablename__ = "star_systems"

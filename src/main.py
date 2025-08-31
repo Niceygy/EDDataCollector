@@ -22,6 +22,7 @@ from constants import (
     DATABASE_URI,
     EDDN_TIMEOUT,
     EDDN_URI,
+    VALID_SENDERS,
     get_week_of_cycle,
     DATABASE_HOST,
     should_be_ignored,
@@ -73,17 +74,7 @@ def is_message_valid(message: dict) -> bool:
         # client version
         client_version = message["header"]["gameversion"]
         client_version = str(client_version).split(".")
-        good = False
-        for i in range(len(client_version)):
-            try:
-                if int(client_version[i]) >= int(VALID_CLIENT_VERSION[i]):
-                    good = True
-                else:
-                    return False
-            except Exception:
-                return False
-
-        if good:
+        if message['header']['softwareName'] in VALID_SENDERS and int(client_version[0]) == VALID_CLIENT_VERSION:
             # message age
             message_timestamp = datetime.datetime.strptime(
                 message["message"]["timestamp"], "%Y-%m-%dT%H:%M:%SZ"
@@ -100,7 +91,7 @@ def is_message_valid(message: dict) -> bool:
                 return True
         else:
             return False
-    except Exception:
+    except Exception as e:
         return False
 
 
@@ -114,7 +105,6 @@ def main():
     session.execute(sqlalchemy.text("UPDATE star_systems SET frequency = 1"))
     subscriber.setsockopt(zmq.SUBSCRIBE, b"")
     subscriber.setsockopt(zmq.RCVTIMEO, EDDN_TIMEOUT)
-    # websocket_queue = start_ws()
     print(f"[3/4] EDDN Subscription Ready")
 
     try:
